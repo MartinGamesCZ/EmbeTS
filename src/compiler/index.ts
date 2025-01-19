@@ -6,6 +6,7 @@ import Runtime, { Api } from "../runtime";
 import { execSync } from "child_process";
 import { BIN_DIR } from "../config";
 import { escapeQuotes, escapeRawCode } from "../utils/escape";
+import swc from "@swc/core";
 
 export class EmbeTS {
   private readonly config: CompilerConfig;
@@ -82,7 +83,22 @@ export class EmbeTS {
 
     code = Api() + code;
 
-    writeFileSync(this.compiledFilePath, code, "utf-8");
+    const compiled = swc.transformSync(code, {
+      filename: "compiled.js",
+      sourceMaps: true,
+      isModule: false,
+      minify: true,
+      jsc: {
+        parser: {
+          syntax: "typescript",
+        },
+        transform: {},
+      },
+    });
+
+    writeFileSync(this.compiledFilePath, compiled.code, "utf-8");
+    if (compiled.map)
+      writeFileSync(this.compiledFilePath + ".map", compiled.map, "utf-8");
   }
 
   private buildRuntime() {
@@ -103,9 +119,9 @@ export class EmbeTS {
     log("Compiling image...");
 
     execSync(
-      `${BIN_DIR}/arduino-cli compile --fqbn ${this.config.board} --export-binaries --build-path=${this.imageDirPath} ${this.runtimeDirPath}`,
+      `${BIN_DIR}/arduino-cli compile --fqbn ${this.config.board}:FlashMode=qio,UploadSpeed=115200,PartitionScheme=huge_app --export-binaries --build-path=${this.imageDirPath} ${this.runtimeDirPath}`,
       {
-        stdio: "pipe",
+        stdio: "inherit",
       }
     );
   }

@@ -9,5 +9,8 @@
   },
   "peerDependencies": {
     "typescript": "^5.0.0"
+  },
+  "dependencies": {
+    "@swc/core": "^1.10.8"
   }
 }
