@@ -41,6 +41,9 @@ const ENTRYPOINT = _function("void", "entrypoint", {}, [
 
 const RUNTIME_SETUP = _function("void", "runtime_setup", {}, [
   _("ctx = duk_create_heap_default()"),
+  _(
+    'xTaskCreatePinnedToCore(BridgeTaskImpl, "BridgeTask", 10000, NULL, 1, &BridgeTask, 0)'
+  ),
   _(NATIVE_CORE_FUNCTIONS),
 ]);
 
@@ -71,7 +74,23 @@ const RUNTIME = [
   _program(),
   _(),
   _("duk_context *ctx"),
-  _(),
+  _("TaskHandle_t BridgeTask"),
+  _function(
+    "void",
+    "BridgeTaskImpl",
+    {
+      parameter: "void *",
+    },
+    [
+      _("while (true) {"),
+      _if("Serial.available()", [
+        _("String cmd = Serial.readStringUntil('\\x77')"),
+        _if('cmd.startsWith("\\x03")', [_("ESP.restart()")]),
+      ]),
+      _("delay(100)"),
+      _("}"),
+    ]
+  ),
   _(NATIVE_UTILS_FUNCTIONS),
   _(NATIVE_CORE_IMPLEMENTATIONS),
   _(RUNTIME_SETUP),

@@ -1,4 +1,11 @@
-import type { PinMode, PinState } from "../../types/lib/hardware";
+declare enum PinMode {
+  INPUT = 0,
+  OUTPUT = 1,
+}
+declare enum PinState {
+  LOW = 0,
+  HIGH = 1,
+}
 
 declare const board: {
   pins: {
@@ -7,4 +14,4 @@ declare const board: {
   }[];
 };
 
-export { board };
+export { board, PinMode, PinState };

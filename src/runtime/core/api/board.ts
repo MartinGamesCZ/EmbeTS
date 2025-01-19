@@ -1,10 +1,16 @@
-import type { PinMode, PinState } from "../../../types/lib/hardware";
-
 declare function $__native_pin_mode(pin: number | string, mode: number): void;
 declare function $__native_pin_dwrite(
   pin: number | string,
   value: number
 ): void;
+declare enum PinMode {
+  INPUT = 0,
+  OUTPUT = 1,
+}
+declare enum PinState {
+  LOW = 0,
+  HIGH = 1,
+}
 
 function IMPL() {
   const board = {
@@ -26,6 +32,16 @@ function IMPL() {
         },
       }
     ),
+  };
+
+  const PinMode = {
+    INPUT: 0,
+    OUTPUT: 1,
+  };
+
+  const PinState = {
+    LOW: 0,
+    HIGH: 1,
   };
 }
 

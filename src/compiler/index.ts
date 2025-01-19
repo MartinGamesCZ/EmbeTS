@@ -8,7 +8,7 @@ import { BIN_DIR } from "../config";
 import { escapeQuotes, escapeRawCode } from "../utils/escape";
 import swc from "@swc/core";
 
-export class EmbeTS {
+export class EmbeTSBuilder {
   private readonly config: CompilerConfig;
 
   private readonly runtimeDirPath: string;
