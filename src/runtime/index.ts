@@ -1,16 +1,41 @@
+import ApiCoreBoard from "./core/api/board";
 import ApiCoreConsole from "./core/api/console";
+import ApiCorePerformance from "./core/api/performance";
 import { NativeCoreFnLog, NativeCoreImplLog } from "./core/native/log";
+import {
+  NativeCoreFnPerformanceNow,
+  NativeCoreImplPerformanceNow,
+} from "./core/native/performance";
+import {
+  NativeCoreFnPinDWrite,
+  NativeCoreFnPinMode,
+  NativeCoreImplPinDWrite,
+  NativeCoreImplPinMode,
+} from "./core/native/pin";
+import JsUtilsFnErrorCreator from "./js_utils/error_creator";
+import NativeUtilsFnLog from "./native_utils/log";
 
 const INCLUDES = ["duktape.h", "Arduino.h"];
 
-const NATIVE_CORE_FUNCTIONS = [NativeCoreFnLog()];
-const NATIVE_CORE_IMPLEMENTATIONS = [NativeCoreImplLog()];
+const NATIVE_UTILS_FUNCTIONS = [NativeUtilsFnLog()];
+const NATIVE_CORE_FUNCTIONS = [
+  NativeCoreFnLog(),
+  NativeCoreFnPinMode(),
+  NativeCoreFnPinDWrite(),
+  NativeCoreFnPerformanceNow(),
+];
+const NATIVE_CORE_IMPLEMENTATIONS = [
+  NativeCoreImplLog(),
+  NativeCoreImplPinMode(),
+  NativeCoreImplPinDWrite(),
+  NativeCoreImplPerformanceNow(),
+];
 
 const ENTRYPOINT = _function("void", "entrypoint", {}, [
   _("Serial.begin(115200)"),
-  _('Serial.println("[boot] EmbeTS Runtime booting...")'),
+  _('bootLog("EmbeTS Runtime booting...")'),
   _("runtime_setup()"),
-  _('Serial.println("[boot] Done.")'),
+  _('runtimeLog("EmbeTS Runtime ready.")'),
   _("runtime_eval(PROGRAM)"),
 ]);
 
@@ -27,11 +52,15 @@ const RUNTIME_EVAL = _function(
   },
   [
     //_('Serial.printf("\\n>>> Evaluating: %s\\n", code)'),
+    _('runtimeLog("Evaluating code...\\n")'),
     _("duk_push_string(ctx, code)"),
     _("duk_int_t rc = duk_peval(ctx)"),
-    _if("rc != 0", [_("duk_safe_to_stacktrace(ctx, -1)")]),
-    _else([_("duk_safe_to_string(ctx, -1)")]),
-    _("String res = duk_get_string(ctx, -1)"),
+    _if("rc != 0", [
+      _("duk_safe_to_stacktrace(ctx, -1)"),
+      _('errorLog("", false)'),
+      _('Serial.printf("%s", duk_safe_to_string(ctx, -1))'),
+    ]),
+    //_("String res = duk_get_string(ctx, -1)"),
     //_('Serial.printf("\\n>>> Result: %s\\n", res ? res : "null")'),
     _("duk_pop(ctx)"),
   ]
@@ -43,6 +72,7 @@ const RUNTIME = [
   _(),
   _("duk_context *ctx"),
   _(),
+  _(NATIVE_UTILS_FUNCTIONS),
   _(NATIVE_CORE_IMPLEMENTATIONS),
   _(RUNTIME_SETUP),
   _(RUNTIME_EVAL),
@@ -111,8 +141,9 @@ export function _quot(str: string) {
 }
 
 // --------------------- API ---------------------
-const APIS = [ApiCoreConsole()];
+const APIS = [ApiCoreConsole(), ApiCoreBoard(), ApiCorePerformance()];
+const JS_UTILS = [JsUtilsFnErrorCreator()];
 
 export function Api() {
-  return _transform(APIS, {});
+  return _([_transform(APIS, {}), _transform(JS_UTILS, {})]);
 }
