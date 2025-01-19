@@ -30,6 +30,14 @@ const CODE = [
       _if("logMsg", [_('Serial.printf("%s", msg)')]),
     ]
   ),
+  _function(
+    "void",
+    "hardwareLog",
+    {
+      "msg[]": "char",
+    },
+    [_('Serial.printf("\\e[30;43;1m HARDWARE \\e[0m %s\\n", msg)')]
+  ),
 ];
 
 export default function NativeUtilsFnLog() {

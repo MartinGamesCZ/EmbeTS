@@ -58,7 +58,7 @@ const RUNTIME_EVAL = _function(
     _if("rc != 0", [
       _("duk_safe_to_stacktrace(ctx, -1)"),
       _('errorLog("", false)'),
-      _('Serial.printf("%s", duk_safe_to_string(ctx, -1))'),
+      _('Serial.printf("%s\\n", duk_safe_to_string(ctx, -1))'),
     ]),
     //_("String res = duk_get_string(ctx, -1)"),
     //_('Serial.printf("\\n>>> Result: %s\\n", res ? res : "null")'),

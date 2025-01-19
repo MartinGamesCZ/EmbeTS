@@ -86,7 +86,7 @@ export class EmbeTS {
     const compiled = swc.transformSync(code, {
       filename: "compiled.js",
       sourceMaps: true,
-      isModule: false,
+      isModule: true,
       minify: true,
       jsc: {
         parser: {
@@ -96,7 +96,14 @@ export class EmbeTS {
       },
     });
 
-    writeFileSync(this.compiledFilePath, compiled.code, "utf-8");
+    writeFileSync(
+      this.compiledFilePath,
+      compiled.code.replaceAll(
+        /[\n\;]export[\W]{0,1}\{[\W]{0,1}\}[;]{0,1}/gm,
+        ""
+      ),
+      "utf-8"
+    );
     if (compiled.map)
       writeFileSync(this.compiledFilePath + ".map", compiled.map, "utf-8");
   }
