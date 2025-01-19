@@ -11,7 +11,9 @@ const IMPL_MODE = _function(
     _("int pin = duk_require_int(ctx, 0)"),
     _("int mode = duk_require_int(ctx, 1)"),
     _("pinMode(pin, mode)"),
-    _('hardwareLog("Pin mode set")'),
+    _(
+      'hardwareLog((char*)("Pin mode set " + String(mode) + " on pin " + String(pin)).c_str())'
+    ),
     _("return 0"),
   ],
   true
@@ -27,7 +29,9 @@ const IMPL_D_WRITE = _function(
     _("int pin = duk_require_int(ctx, 0)"),
     _("int value = duk_require_int(ctx, 1)"),
     _("digitalWrite(pin, value)"),
-    _('hardwareLog("Pin state set")'),
+    _(
+      'hardwareLog((char*)("Pin state set " + String(value) + " on pin " + String(pin)).c_str())'
+    ),
     _("return 0"),
   ],
   true
