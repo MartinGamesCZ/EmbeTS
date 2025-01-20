@@ -1,0 +1,19 @@
+{
+  "name": "hello-world",
+  "module": "src/index.ts",
+  "type": "module",
+  "scripts": {
+    "flash": "BUILD=1 FLASH=1 bun build.ts",
+    "compile": "BUILD=1 bun build.ts",
+    "console": "bun build.ts"
+  },
+  "devDependencies": {
+    "@types/bun": "latest"
+  },
+  "peerDependencies": {
+    "typescript": "^5.0.0"
+  },
+  "dependencies": {
+    "embets": "../.."
+  }
+}

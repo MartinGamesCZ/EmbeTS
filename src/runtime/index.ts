@@ -82,12 +82,23 @@ const RUNTIME = [
       parameter: "void *",
     },
     [
+      _("Serial.write('\\x00')"),
+      _("Serial.write('\\x01')"),
+      _("Serial.write('\\x01')"),
+      _("Serial.write('\\x77')"),
       _("while (true) {"),
       _if("Serial.available()", [
         _("String cmd = Serial.readStringUntil('\\x77')"),
-        _if('cmd.startsWith("\\x03")', [_("ESP.restart()")]),
+        _if('cmd.startsWith("\\x00\\x01")', [
+          _("cmd = cmd.substring(2)"),
+          _if('cmd == "\\x03"', [_("ESP.restart()")]),
+          _if('cmd == "\\x04"', [
+            _("String code = Serial.readStringUntil('\\x00\\x01\\x05')"),
+            _("runtime_eval(code.c_str())"),
+          ]),
+        ]),
       ]),
-      _("delay(100)"),
+      _("delay(10)"),
       _("}"),
     ]
   ),

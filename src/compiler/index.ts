@@ -39,8 +39,11 @@ export class EmbeTSBuilder {
     this.checkEnvironment();
     this.makeOutputDirectory();
     this.compileCode();
-    this.buildRuntime();
-    this.compileImage();
+
+    if (this.config.onlyJs === false || !this.config.onlyJs) {
+      this.buildRuntime();
+      this.compileImage();
+    }
   }
 
   upload(port: string) {
@@ -99,8 +102,8 @@ export class EmbeTSBuilder {
     writeFileSync(
       this.compiledFilePath,
       compiled.code.replaceAll(
-        /[\n\;]export[\W]{0,1}\{[\W]{0,1}\}[;]{0,1}/gm,
-        ""
+        /([\}\n\;])export[\W]{0,1}\{[\W]{0,1}\}[;]{0,1}/gm,
+        "$1"
       ),
       "utf-8"
     );
