@@ -24,24 +24,9 @@ export class EmbedTSConsole {
         shell: true,
       }
     );
-  }
 
-  close() {
-    if (this.proc) this.proc.kill();
-  }
-
-  on(event: "ready", callback: any) {
-    this.listeners.push({ event, callback });
-  }
-
-  attach(stdin: NodeJS.ReadStream, stdout: NodeJS.WriteStream) {
-    if (!this.proc) this.open();
-    if (!this.proc) return;
-
-    if (this.config.restartOnOpen) this.sendRestartPacket();
-
-    this.proc.stdout.on("data", (c) => {
-      if (c.includes("\x00\x01\x01\x77")) {
+    this.proc.stdout.on("data", (data) => {
+      if (data.includes("\x00\x01\x01\x77")) {
         this.listeners.forEach((listener) => {
           if (listener.event === "ready") listener.callback();
         });
@@ -49,8 +34,29 @@ export class EmbedTSConsole {
         return;
       }
 
-      stdout.write(c);
+      this.listeners.forEach((listener) => {
+        if (listener.event === "data") listener.callback(data.toString());
+      });
     });
+
+    if (this.config.restartOnOpen) this.sendRestartPacket();
+  }
+
+  close() {
+    if (this.proc) this.proc.kill();
+  }
+
+  on(event: "ready" | "data", callback: any) {
+    this.listeners.push({ event, callback });
+  }
+
+  attach(stdin: NodeJS.ReadStream, stdout: NodeJS.WriteStream) {
+    if (!this.proc) this.open();
+    if (!this.proc) return;
+
+    this.proc.stdout.on("data", (data) =>
+      data.includes("\x00\x01") ? "" : stdout.write(data)
+    );
     this.proc.stderr.pipe(stdout);
   }
 
@@ -83,17 +89,5 @@ export class EmbedTSConsole {
     console.log("Sending restart packet...");
 
     this.proc.stdin.write("\x00\x01\x03\x77");
-  }
-
-  private sendEvalStartPacket() {
-    if (!this.proc) return;
-
-    this.proc.stdin.write("\x00\x01\x04\x77");
-  }
-
-  private sendEvalEndPacket() {
-    if (!this.proc) return;
-
-    this.proc.stdin.write("\x00\x01\x05\x77");
   }
 }
