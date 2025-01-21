@@ -1,15 +1,15 @@
-# embets
+# EmbeTS
 
-To install dependencies:
-
-```bash
-bun install
+```sh
+npm install embets
 ```
 
-To run:
+---
 
-```bash
-bun run src/index.ts
-```
+## License
 
-This project was created using `bun init` in bun v1.1.29. [Bun](https://bun.sh) is a fast all-in-one JavaScript runtime.
+The library itself is lincensed under the LGPL-3.0 license. The examples are licensed under the MIT license.
+
+### Included Libraries
+
+- [arduino-cli - GPL-3.0](https://github.com/arduino/arduino-cli/blob/master/LICENSE.txt)

@@ -1,5 +1,5 @@
 import { readFileSync, watchFile } from "fs";
-import { EmbedTSConsole, EmbeTSBuilder } from "../../src/index";
+import { EmbedTSConsole, EmbeTSBuilder } from "embets";
 import path from "path";
 
 const embets = new EmbeTSBuilder({
