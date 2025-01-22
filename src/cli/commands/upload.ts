@@ -38,7 +38,7 @@ export async function exec(
     restartOnOpen: true,
   });
 
-  log("Please restart your board in download mode");
+  log("\n\nPlease restart your board in download mode");
 
   _console.open();
 
