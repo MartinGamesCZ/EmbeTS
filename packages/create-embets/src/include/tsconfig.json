@@ -22,6 +22,14 @@
     // Some stricter flags (disabled by default)
     "noUnusedLocals": false,
     "noUnusedParameters": false,
-    "noPropertyAccessFromIndexSignature": false
+    "noPropertyAccessFromIndexSignature": false,
+
+    "rootDir": "./",
+    "paths": {
+      "@": ["./src"],
+
+      // EmbeTS modules
+      "embets:hardware": ["./node_modules/embets/dist/lib/hardware/index.d.ts"]
+    }
   }
 }
