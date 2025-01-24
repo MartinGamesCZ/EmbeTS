@@ -1,6 +1,7 @@
 import ApiCoreBoard from "./core/api/board";
 import ApiCoreConsole from "./core/api/console";
 import ApiCorePerformance from "./core/api/performance";
+import ApiCoreTimers from "./core/api/timers";
 import { NativeCoreFnLog, NativeCoreImplLog } from "./core/native/log";
 import {
   NativeCoreFnPerformanceNow,
@@ -13,6 +14,8 @@ import {
   NativeCoreImplPinMode,
 } from "./core/native/pin";
 import JsUtilsFnErrorCreator from "./js_utils/error_creator";
+import JsUtilsFnGlobal from "./js_utils/global";
+import JsUtilsFnLoop from "./js_utils/loop";
 import NativeUtilsFnLog from "./native_utils/log";
 
 const INCLUDES = ["duktape.h", "Arduino.h"];
@@ -36,7 +39,7 @@ const ENTRYPOINT = _function("void", "entrypoint", {}, [
   _('bootLog("EmbeTS Runtime booting...")'),
   _("runtime_setup()"),
   _('runtimeLog("EmbeTS Runtime ready.")'),
-  _("runtime_eval(PROGRAM)"),
+  _("runtime_eval(PROGRAM, false)"),
 ]);
 
 const RUNTIME_SETUP = _function("void", "runtime_setup", {}, [
@@ -52,10 +55,11 @@ const RUNTIME_EVAL = _function(
   "runtime_eval",
   {
     "*code": "const char",
+    suppressLog: "bool",
   },
   [
     //_('Serial.printf("\\n>>> Evaluating: %s\\n", code)'),
-    _('runtimeLog("Evaluating code...\\n")'),
+    _if("!suppressLog", [_('runtimeLog("Evaluating code...\\n")')]),
     _("duk_push_string(ctx, code)"),
     _("duk_int_t rc = duk_peval(ctx)"),
     _if("rc != 0", [
@@ -86,6 +90,7 @@ const RUNTIME = [
       _("Serial.write('\\x01')"),
       _("Serial.write('\\x01')"),
       _("Serial.write('\\x77')"),
+      _("delay(200)"),
       _("while (true) {"),
       _if("Serial.available()", [
         _("String cmd = Serial.readStringUntil('\\x77')"),
@@ -94,10 +99,11 @@ const RUNTIME = [
           _if('cmd == "\\x03"', [_("ESP.restart()")]),
           _if('cmd == "\\x04"', [
             _("String code = Serial.readStringUntil('\\x00\\x01\\x05')"),
-            _("runtime_eval(code.c_str())"),
+            _("runtime_eval(code.c_str(), false)"),
           ]),
         ]),
       ]),
+      _("runtime_eval(\"if (typeof ___loop != 'undefined') ___loop()\", true)"),
       _("delay(10)"),
       _("}"),
     ]
@@ -108,7 +114,10 @@ const RUNTIME = [
   _(RUNTIME_EVAL),
   _(ENTRYPOINT),
   _function("void", "setup", {}, [_("entrypoint()")]),
-  _function("void", "loop", {}, []),
+  _function("void", "loop", {}, [
+    //_('Serial.println("EmbeTS Runtime running...")'),
+    _("delay(1000)"),
+  ]),
 ];
 
 export default function Runtime(code: string) {
@@ -171,8 +180,20 @@ export function _quot(str: string) {
 }
 
 // --------------------- API ---------------------
-const APIS = [ApiCoreConsole(), ApiCoreBoard(), ApiCorePerformance()];
-const JS_UTILS = [JsUtilsFnErrorCreator()];
+const APIS = [
+  ApiCoreConsole(),
+  ApiCoreBoard(),
+  ApiCorePerformance(),
+  ApiCoreTimers(),
+];
+const JS_UTILS = [
+  // Global needs to be first
+  // ---------------------------
+  JsUtilsFnGlobal(),
+  // ---------------------------
+  JsUtilsFnLoop(),
+  JsUtilsFnErrorCreator(),
+];
 
 export function Api() {
   return _([_transform(APIS, {}), _transform(JS_UTILS, {})]);

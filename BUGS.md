@@ -1,0 +1,1 @@
+- [ ] setTimeout callback called twice when clearTimeout is called in it, suspected race condition in the event loop
