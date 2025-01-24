@@ -8,8 +8,10 @@ import {
   NativeCoreImplPerformanceNow,
 } from "./core/native/performance";
 import {
+  NativeCoreFnPinDRead,
   NativeCoreFnPinDWrite,
   NativeCoreFnPinMode,
+  NativeCoreImplPinDRead,
   NativeCoreImplPinDWrite,
   NativeCoreImplPinMode,
 } from "./core/native/pin";
@@ -25,12 +27,14 @@ const NATIVE_CORE_FUNCTIONS = [
   NativeCoreFnLog(),
   NativeCoreFnPinMode(),
   NativeCoreFnPinDWrite(),
+  NativeCoreFnPinDRead(),
   NativeCoreFnPerformanceNow(),
 ];
 const NATIVE_CORE_IMPLEMENTATIONS = [
   NativeCoreImplLog(),
   NativeCoreImplPinMode(),
   NativeCoreImplPinDWrite(),
+  NativeCoreImplPinDRead(),
   NativeCoreImplPerformanceNow(),
 ];
 

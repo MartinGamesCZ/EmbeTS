@@ -3,6 +3,11 @@ declare function $__native_pin_dwrite(
   pin: number | string,
   value: number
 ): void;
+declare function $__native_pin_dread(pin: number | string): number;
+declare const ___global: {
+  loopCallbacks?: (() => void)[];
+};
+
 declare enum PinMode {
   OUTPUT = 0x03,
   INPUT = 0x01,
@@ -29,6 +34,9 @@ function IMPL() {
                 parseInt(prop),
                 typeof value == "number" ? value : value ? 1 : 0
               );
+            },
+            getState: function (): 0 | 1 {
+              return $__native_pin_dread(parseInt(prop)) as 0 | 1;
             },
           };
         },
