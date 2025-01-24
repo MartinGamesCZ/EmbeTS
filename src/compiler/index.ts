@@ -19,6 +19,8 @@ export class EmbeTSBuilder {
 
   private readonly logger: Logger;
 
+  private readonly checksums: { [key: string]: string } = {};
+
   constructor(config: CompilerConfig) {
     this.config = config;
 
@@ -44,6 +46,7 @@ export class EmbeTSBuilder {
     dlog(`Output: ${this.config.output}`);
     this.logger.log("Building code...");
 
+    this.loadChecksums();
     this.checkEnvironment();
     this.makeOutputDirectory();
     this.compileCode();
@@ -52,8 +55,11 @@ export class EmbeTSBuilder {
       this.buildRuntime();
       this.compileImage();
     }
+
+    this.saveChecksums();
   }
 
+  // TODO: Implement check for checksums and only flash if necessary
   upload(port: string) {
     dlog("Uploading EmbeTS...");
     this.logger.log("Uploading code...");
@@ -118,6 +124,10 @@ export class EmbeTSBuilder {
     );
     if (compiled.map)
       writeFileSync(this.compiledFilePath + ".map", compiled.map, "utf-8");
+
+    this.checksums["compiled"] = this.checksum(
+      readFileSync(this.compiledFilePath, "utf-8")
+    );
   }
 
   private buildRuntime() {
@@ -132,10 +142,25 @@ export class EmbeTSBuilder {
       source,
       "utf-8"
     );
+
+    this.checksums["runtime"] = this.checksum(source);
   }
 
   private compileImage() {
     dlog("Compiling image...");
+
+    if (
+      this.checkChecksum(
+        "runtime",
+        readFileSync(
+          path.resolve(this.config.output, "runtime/runtime.ino"),
+          "utf-8"
+        )
+      )
+    ) {
+      this.logger.log("Compiled code is up to date.");
+      return;
+    }
 
     execSync(
       `${BIN_DIR}/arduino-cli compile --fqbn ${this.config.board}:FlashMode=qio,UploadSpeed=115200,PartitionScheme=huge_app --export-binaries --build-path=${this.imageDirPath} ${this.runtimeDirPath}`,
@@ -143,5 +168,40 @@ export class EmbeTSBuilder {
         stdio: "inherit",
       }
     );
+  }
+
+  private checksum(s: string) {
+    let chk = 0x12345678;
+
+    for (var i = 0; i < s.length; i++) {
+      chk += s.charCodeAt(i) * (i + 1);
+    }
+
+    return (chk & 0xffffffff).toString(16);
+  }
+
+  private saveChecksums() {
+    dlog("Saving checksums...");
+
+    writeFileSync(
+      path.resolve(this.config.output, "checksums.json"),
+      JSON.stringify(this.checksums, null, 2),
+      "utf-8"
+    );
+  }
+
+  private loadChecksums() {
+    if (!existsSync(path.resolve(this.config.output, "checksums.json")))
+      return {};
+
+    return JSON.parse(
+      readFileSync(path.resolve(this.config.output, "checksums.json"), "utf-8")
+    );
+  }
+
+  private checkChecksum(key: string, s: string) {
+    const chk = this.loadChecksums()[key];
+
+    return chk === this.checksum(s);
   }
 }
