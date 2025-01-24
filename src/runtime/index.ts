@@ -98,6 +98,7 @@ const RUNTIME = [
           _("cmd = cmd.substring(2)"),
           _if('cmd == "\\x03"', [_("ESP.restart()")]),
           _if('cmd == "\\x04"', [
+            _('Serial.write("\\x01\\x00\\x00\\x77")'),
             _("String code = Serial.readStringUntil('\\x00\\x01\\x05')"),
             _("runtime_eval(code.c_str(), false)"),
           ]),

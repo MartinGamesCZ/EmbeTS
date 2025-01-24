@@ -8,7 +8,7 @@ const CODE = [
     {
       "msg[]": "char",
     },
-    [_('Serial.printf("\\e[30;47;1m BOOT \\e[0m %s\\n", msg)')]
+    [_('Serial.printf("\\e[30;47;1m BOOT \\e[0m      %s\\n", msg)')]
   ),
   _function(
     "void",
@@ -16,7 +16,7 @@ const CODE = [
     {
       "msg[]": "char",
     },
-    [_('Serial.printf("\\e[30;44;1m RUNTIME \\e[0m %s\\n", msg)')]
+    [_('Serial.printf("\\e[30;44;1m RUNTIME \\e[0m   %s\\n", msg)')]
   ),
   _function(
     "void",
@@ -36,7 +36,7 @@ const CODE = [
     {
       "msg[]": "char",
     },
-    [_('Serial.printf("\\e[30;43;1m HARDWARE \\e[0m %s\\n", msg)')]
+    [_('Serial.printf("\\e[30;43;1m HARDWARE \\e[0m  %s\\n", msg)')]
   ),
 ];
 

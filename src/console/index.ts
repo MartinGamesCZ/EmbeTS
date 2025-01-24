@@ -7,14 +7,24 @@ import {
 } from "child_process";
 import type { ConsoleConfig } from "../types/console";
 import { BIN_DIR } from "../config";
+import { Logger } from "src/utils/log";
+import chalk from "chalk";
 
 export class EmbedTSConsole {
   private readonly config: ConsoleConfig;
   private proc: ChildProcessWithoutNullStreams | null = null;
   private listeners: any[] = [];
 
+  private logger: Logger;
+  private oLogger: Logger;
+
   constructor(config: ConsoleConfig) {
     this.config = config;
+
+    this.logger = new Logger(
+      Logger.s.default("CONSOLE", "bgMagenta", "$message")
+    );
+    this.oLogger = new Logger(Logger.s.default("o", "bgMagenta", "$message"));
   }
 
   open() {
@@ -55,9 +65,18 @@ export class EmbedTSConsole {
     if (!this.proc) return;
 
     this.proc.stdout.on("data", (data) =>
-      data.includes("\x00\x01") ? "" : stdout.write(data)
+      data.includes("\x00\x01") ? "" : this.printOut(data, stdout)
     );
     this.proc.stderr.pipe(stdout);
+  }
+
+  private printOut(data: any, stdout: NodeJS.WriteStream) {
+    // Print data to stdout but append "o" to the beginning of each line
+    const str = data.toString();
+
+    if (!str.includes("\n")) return stdout.write(str);
+
+    stdout.write(str.split("\n").join(`\n${chalk.magenta("●")} `));
   }
 
   eval(code: string) {
@@ -81,12 +100,14 @@ export class EmbedTSConsole {
     };
 
     sendCommand();
+
+    process.stdout.write(chalk.magenta("●") + " ");
   }
 
   private sendRestartPacket() {
     if (!this.proc) return;
 
-    console.log("Sending restart packet...");
+    this.logger.log("Requesting restart...");
 
     this.proc.stdin.write("\x00\x01\x03\x77");
   }

@@ -1,9 +1,9 @@
-import { log } from "console";
 import { EmbedTSConsole } from "../../console";
 import { EmbeTSBuilder } from "../../compiler";
 import { watchFile, readFileSync, existsSync } from "fs";
 import path from "path";
 import { BOARDS } from "src/config";
+import { Logger } from "src/utils/log";
 
 export const NAME = "watch";
 export const OPTIONS = [
@@ -23,6 +23,9 @@ export const OPTIONS = [
     description: "The output directory",
   },
 ];
+
+const devLogger = new Logger(Logger.s.default("DEV", "bgYellow", "$message"));
+const cliLogger = new Logger(Logger.s.default("CLI", "bgWhite", "$message"));
 
 export async function exec(
   args: string[],
@@ -51,16 +54,16 @@ export async function exec(
 
   const _console = new EmbedTSConsole({
     port: options.port,
-    restartOnOpen: true,
+    restartOnOpen: false,
   });
 
-  log("Please restart your board in download mode");
+  cliLogger.log("Please restart your board in download mode");
 
   _console.open();
 
   await awaitReady(_console);
 
-  log("Board is ready, uploading...");
+  cliLogger.log("Board is ready, uploading...");
 
   const builder = new EmbeTSBuilder({
     entrypoint: args[0] ?? config?.entrypoint,
@@ -87,9 +90,16 @@ export async function exec(
 
   embetsConsole.attach(process.stdin, process.stdout);
 
+  let listening = false;
+
   embetsConsole.on("ready", () => {
+    if (listening) return;
+
+    listening = true;
+
     watchFile(args[0] ?? config?.entrypoint, () => {
-      console.log("[DEV] File changed, rebuilding...");
+      console.log();
+      devLogger.log("File changed, rebuilding...");
       watchBuilder.build();
 
       embetsConsole.eval(

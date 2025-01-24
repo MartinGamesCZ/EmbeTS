@@ -1,7 +1,7 @@
 import { DEBUG } from "../config";
 
-export default function log(message: string) {
+export default function dlog(message: string) {
   if (!DEBUG) return;
 
-  console.log(message);
+  console.log("[dbug]", message);
 }
