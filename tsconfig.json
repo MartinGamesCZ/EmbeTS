@@ -29,7 +29,11 @@
     // Output settings
     "declaration": true,
     "outDir": "./dist",
-    "sourceMap": true // Added for better debugging support
+    "sourceMap": true,
+    "baseUrl": ".",
+    "paths": {
+      "embets:hardware": ["./dist/lib/hardware/index.d.ts"]
+    }
   },
   "include": ["src/**/*"],
   "exclude": ["node_modules", "dist", "test"]

@@ -1,6 +1,6 @@
 {
   "name": "embets",
-  "version": "0.2.0",
+  "version": "0.3.0",
   "description": "TypeScript runtime for embedded microcontrollers",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
@@ -36,5 +36,11 @@
   "devDependencies": {
     "@types/node": "^20.8.10",
     "typescript": "^5.2.2"
+  },
+  "exports": {
+    "embets:hardware": {
+      "types": "./dist/lib/hardware/index.d.ts",
+      "default": "./dist/lib/hardware/index.js"
+    }
   }
 }

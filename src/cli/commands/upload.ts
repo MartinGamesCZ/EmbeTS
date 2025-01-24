@@ -1,6 +1,9 @@
 import { log } from "console";
 import { EmbedTSConsole } from "../../console";
 import { EmbeTSBuilder } from "../../compiler";
+import path from "path";
+import { existsSync, readFile, readFileSync } from "fs";
+import { BOARDS } from "src/config";
 
 export const NAME = "upload";
 export const OPTIONS = [
@@ -27,20 +30,33 @@ export async function exec(
     [key: string]: string;
   }
 ) {
+  const configPath = path.join(process.cwd(), "embets.config.json");
+
+  let config: any = null;
+
+  if (existsSync(configPath))
+    config = JSON.parse(readFileSync(configPath, "utf-8"));
+
   if (!options.port) return console.error("Please provide a port (--port)");
-  if (args.length === 0) return console.error("Please provide an entrypoint");
+  if (args.length === 0 && !config?.entrypoint)
+    return console.error("Please provide an entrypoint");
   if (args.length > 1)
     return console.error("Please provide only one entrypoint");
-  if (!options.board) return console.error("Please provide a board (--board)");
+  if (!options.board && !config?.board)
+    return console.error("Please provide a board (--board)");
+
+  if (config && config.board)
+    options.board =
+      BOARDS.find((b) => b.id === config.board)?.fqbn ?? options.board;
 
   const _console = new EmbedTSConsole({
     port: options.port,
     restartOnOpen: true,
   });
 
-  log("\n\nPlease restart your board in download mode");
-
   _console.open();
+
+  log("\n\nPlease restart your board in download mode");
 
   await awaitReady(_console);
 
@@ -48,8 +64,8 @@ export async function exec(
 
   const builder = new EmbeTSBuilder({
     entrypoint: args[0],
-    output: options.outDir ?? "build",
-    board: options.board,
+    output: options.outDir ?? config?.output ?? "build",
+    board: options.board ?? config?.board,
   });
 
   builder.build();

@@ -1,0 +1,7 @@
+{
+  "version": 1,
+  "name": "weather-station",
+  "board": "builtin-ardu-esp32-wroom-da",
+  "entrypoint": "./src/index.ts",
+  "output": "./build"
+}

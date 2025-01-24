@@ -1,8 +1,9 @@
 import { log } from "console";
 import { EmbedTSConsole } from "../../console";
 import { EmbeTSBuilder } from "../../compiler";
-import { watchFile, readFileSync } from "fs";
+import { watchFile, readFileSync, existsSync } from "fs";
 import path from "path";
+import { BOARDS } from "src/config";
 
 export const NAME = "watch";
 export const OPTIONS = [
@@ -29,11 +30,24 @@ export async function exec(
     [key: string]: string;
   }
 ) {
+  const configPath = path.join(process.cwd(), "embets.config.json");
+
+  let config: any = null;
+
+  if (existsSync(configPath))
+    config = JSON.parse(readFileSync(configPath, "utf-8"));
+
   if (!options.port) return console.error("Please provide a port (--port)");
-  if (args.length === 0) return console.error("Please provide an entrypoint");
+  if (args.length === 0 && !config?.entrypoint)
+    return console.error("Please provide an entrypoint");
   if (args.length > 1)
     return console.error("Please provide only one entrypoint");
-  if (!options.board) return console.error("Please provide a board (--board)");
+  if (!options.board && !config?.board)
+    return console.error("Please provide a board (--board)");
+
+  if (config && config.board)
+    options.board =
+      BOARDS.find((b) => b.id === config.board)?.fqbn ?? options.board;
 
   const _console = new EmbedTSConsole({
     port: options.port,
@@ -49,9 +63,10 @@ export async function exec(
   log("Board is ready, uploading...");
 
   const builder = new EmbeTSBuilder({
-    entrypoint: args[0],
-    output: options.outDir ?? "build",
-    board: options.board,
+    entrypoint: args[0] ?? config?.entrypoint,
+    output: options.outDir ?? config?.output ?? "build",
+    board:
+      options.board ?? BOARDS.find((b) => b.id === config?.board)?.fqbn ?? "",
   });
 
   builder.build();
@@ -63,21 +78,28 @@ export async function exec(
   });
 
   const watchBuilder = new EmbeTSBuilder({
-    entrypoint: args[0],
-    output: options.outDir ?? "build",
-    board: options.board,
+    entrypoint: args[0] ?? config?.entrypoint,
+    output: options.outDir ?? config?.output ?? "build",
+    board:
+      options.board ?? BOARDS.find((b) => b.id === config?.board)?.fqbn ?? "",
     onlyJs: true,
   });
 
   embetsConsole.attach(process.stdin, process.stdout);
 
   embetsConsole.on("ready", () => {
-    watchFile(args[0], () => {
+    watchFile(args[0] ?? config?.entrypoint, () => {
       console.log("[DEV] File changed, rebuilding...");
       watchBuilder.build();
 
       embetsConsole.eval(
-        readFileSync(path.join(process.cwd(), "build/compiled.js"), "utf-8")
+        readFileSync(
+          path.join(
+            process.cwd(),
+            (config?.output ?? "build") + "/compiled.js"
+          ),
+          "utf-8"
+        )
       );
     });
   });
