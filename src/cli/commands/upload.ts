@@ -63,7 +63,7 @@ export async function exec(
   log("Board is ready, uploading...");
 
   const builder = new EmbeTSBuilder({
-    entrypoint: args[0],
+    entrypoint: args[0] ?? config?.entrypoint,
     output: options.outDir ?? config?.output ?? "build",
     board: options.board ?? config?.board,
   });
