@@ -1,3 +1,4 @@
+import path from "path";
 import ApiCoreBoard from "./core/api/board";
 import ApiCoreConsole from "./core/api/console";
 import ApiCorePerformance from "./core/api/performance";
@@ -51,6 +52,7 @@ const RUNTIME_SETUP = _function("void", "runtime_setup", {}, [
   _(
     'xTaskCreatePinnedToCore(BridgeTaskImpl, "BridgeTask", 10000, NULL, 1, &BridgeTask, 0)'
   ),
+  _("$4"),
   _(NATIVE_CORE_FUNCTIONS),
 ]);
 
@@ -79,6 +81,7 @@ const RUNTIME_EVAL = _function(
 
 const RUNTIME = [
   _includes(),
+  "$2",
   _program(),
   _(),
   _("duk_context *ctx"),
@@ -113,6 +116,7 @@ const RUNTIME = [
       _("}"),
     ]
   ),
+  _("$3"),
   _(NATIVE_UTILS_FUNCTIONS),
   _(NATIVE_CORE_IMPLEMENTATIONS),
   _(RUNTIME_SETUP),
@@ -125,9 +129,27 @@ const RUNTIME = [
   ]),
 ];
 
-export default function Runtime(code: string) {
+export default function Runtime(
+  code: string,
+  cImports: { [key: string]: string },
+  cRegistrations: {
+    [key: string]: { source: string; ret: string; args: string[] };
+  }
+) {
+  const nativeBindings = Object.entries(cRegistrations).map(([k, v]) =>
+    generateNativeBinding(v.source.split(".")[1], k, v.ret, v.args)
+  );
+
+  const nativeBindingsImpl = nativeBindings.map((nb) => nb[0]);
+  const nativeBindingsDef = nativeBindings.map((nb) => nb[1]);
+
   return _transform(RUNTIME, {
     1: code,
+    2: Object.entries(cImports)
+      .map(([k, v]) => `#include "./${path.basename(v)}"`)
+      .join("\n"),
+    3: nativeBindingsImpl.join("\n"),
+    4: nativeBindingsDef.join("\n"),
   });
 }
 
@@ -182,6 +204,48 @@ export function _transform(
 
 export function _quot(str: string) {
   return `"${str}"`;
+}
+
+// --------
+export function generateNativeBinding(
+  cfnName: string,
+  jsfnName: string,
+  ret: string,
+  args: string[]
+) {
+  const typeMappings: any = {
+    int: "number",
+  };
+
+  return [
+    _transform(
+      _function(
+        "duk_ret_t",
+        "impl_runtime_native_" + jsfnName,
+        { "*ctx": "duk_context" },
+        [
+          ...args.map((a, i) => _(`${a} p${i} = duk_require_${a}(ctx, ${i})`)),
+          _(
+            `${ret} res = ${cfnName}(${args.map((_, i) => `p${i}`).join(", ")})`
+          ),
+          _(`duk_push_${typeMappings[ret]}(ctx, (${ret})res)`),
+          _("return 1"),
+        ]
+      ),
+      {}
+    ),
+    _transform(
+      [
+        _(
+          "duk_push_c_function(ctx, impl_runtime_native_" +
+            jsfnName +
+            ", DUK_VARARGS)"
+        ),
+        _("duk_put_global_string(ctx, " + _quot(`_cfn${jsfnName}`) + ")"),
+      ],
+      {}
+    ),
+  ];
 }
 
 // --------------------- API ---------------------

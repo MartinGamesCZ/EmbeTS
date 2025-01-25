@@ -29,12 +29,19 @@ export class Logger {
 
   static s = {
     default: (category: string, color: LogColor, message: string) =>
-      `${chalk.gray("●")} ${chalk[color](
+      `${chalk.dim("●")} ${chalk[color](
         chalk.black(chalk.bold(` ${category} `))
       ).padEnd(40, " ")} ${message}`,
   };
 
+  private clearLine() {
+    process.stdout.write(
+      "\r" + " ".repeat(process.stdout.columns || 80) + "\r"
+    );
+  }
+
   log(message: string) {
+    this.clearLine();
     console.log(this.style.replace("$message", message));
   }
 }

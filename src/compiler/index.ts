@@ -1,13 +1,20 @@
 import path from "path";
 import type { CompilerConfig } from "../types/compiler";
 import dlog from "../utils/debug";
-import { existsSync, mkdirSync, readFileSync, writeFileSync } from "fs";
+import {
+  copyFileSync,
+  existsSync,
+  mkdirSync,
+  readFileSync,
+  writeFileSync,
+} from "fs";
 import Runtime, { Api } from "../runtime";
-import { execSync } from "child_process";
+import { execSync, spawn, spawnSync } from "child_process";
 import { BIN_DIR } from "../config";
 import { escapeQuotes, escapeRawCode } from "../utils/escape";
 import swc from "@swc/core";
 import { Logger } from "src/utils/log";
+import chalk from "chalk";
 
 export class EmbeTSBuilder {
   private readonly config: CompilerConfig;
@@ -20,6 +27,22 @@ export class EmbeTSBuilder {
   private readonly logger: Logger;
 
   private readonly checksums: { [key: string]: string } = {};
+
+  private transforms: {
+    cImports: {
+      [key: string]: string;
+    };
+    cRegistrations: {
+      [key: string]: {
+        source: string;
+        ret: string;
+        args: string[];
+      };
+    };
+  } = {
+    cImports: {},
+    cRegistrations: {},
+  };
 
   constructor(config: CompilerConfig) {
     this.config = config;
@@ -40,7 +63,7 @@ export class EmbeTSBuilder {
     );
   }
 
-  build() {
+  async build() {
     dlog("Building EmbeTS...");
     dlog(`Entrypoint: ${this.config.entrypoint}`);
     dlog(`Output: ${this.config.output}`);
@@ -51,27 +74,49 @@ export class EmbeTSBuilder {
     this.makeOutputDirectory();
     this.compileCode();
 
+    this.copyCImports();
+
     if (this.config.onlyJs === false || !this.config.onlyJs) {
       this.buildRuntime();
-      this.compileImage();
+      await this.compileImage();
     }
 
     this.saveChecksums();
   }
 
   // TODO: Implement check for checksums and only flash if necessary
-  upload(port: string) {
+  async upload(port: string) {
     dlog("Uploading EmbeTS...");
     this.logger.log("Uploading code...");
 
     this.checkEnvironment();
 
-    execSync(
+    const proc = spawn(
       `${BIN_DIR}/arduino-cli upload --fqbn ${this.config.board} --port ${port} --build-path=${this.imageDirPath}`,
       {
-        stdio: "inherit",
+        shell: true,
       }
     );
+
+    process.stdout.write(chalk.green("●") + " ");
+
+    await new Promise<void>((res) => {
+      proc.stdout.on("data", (data) => {
+        const str = data.toString();
+
+        if (!str.includes("\n")) return process.stdout.write(str);
+
+        process.stdout.write(str.split("\n").join(`\n${chalk.green("●")} `));
+      });
+
+      proc.stderr.on("data", (data) => {
+        process.stdout.write(data);
+      });
+
+      proc.on("exit", () => {
+        res();
+      });
+    });
   }
 
   private checkEnvironment() {
@@ -114,19 +159,24 @@ export class EmbeTSBuilder {
       },
     });
 
-    writeFileSync(
-      this.compiledFilePath,
-      compiled.code.replaceAll(
-        /([\}\n\;])export[\W]{0,1}\{[\W]{0,1}\}[;]{0,1}/gm,
-        "$1"
-      ),
-      "utf-8"
+    let compiledCode = compiled.code.replaceAll(
+      /([\}\n\;])export[\W]{0,1}\{[\W]{0,1}\}[;]{0,1}/gm,
+      "$1"
     );
+
+    compiledCode = this.transformCImports(compiledCode);
+    compiledCode = this.transformCRegistrations(compiledCode);
+
+    writeFileSync(this.compiledFilePath, compiledCode, "utf-8");
     if (compiled.map)
       writeFileSync(this.compiledFilePath + ".map", compiled.map, "utf-8");
 
     this.checksums["compiled"] = this.checksum(
       readFileSync(this.compiledFilePath, "utf-8")
+    );
+
+    this.checksums["transforms"] = this.checksum(
+      JSON.stringify(this.transforms)
     );
   }
 
@@ -134,7 +184,9 @@ export class EmbeTSBuilder {
     dlog("Building runtime...");
 
     const source = Runtime(
-      escapeRawCode(readFileSync(this.compiledFilePath, "utf-8"))
+      escapeRawCode(readFileSync(this.compiledFilePath, "utf-8")),
+      this.transforms.cImports,
+      this.transforms.cRegistrations
     );
 
     writeFileSync(
@@ -146,7 +198,7 @@ export class EmbeTSBuilder {
     this.checksums["runtime"] = this.checksum(source);
   }
 
-  private compileImage() {
+  private async compileImage() {
     dlog("Compiling image...");
 
     if (
@@ -162,12 +214,32 @@ export class EmbeTSBuilder {
       return;
     }
 
-    execSync(
+    process.stdout.write(chalk.green("●") + " ");
+
+    const proc = spawn(
       `${BIN_DIR}/arduino-cli compile --fqbn ${this.config.board}:FlashMode=qio,UploadSpeed=115200,PartitionScheme=huge_app --export-binaries --build-path=${this.imageDirPath} ${this.runtimeDirPath}`,
       {
-        stdio: "inherit",
+        shell: true,
       }
     );
+
+    await new Promise<void>((res) => {
+      proc.stdout.on("data", (data) => {
+        const str = data.toString();
+
+        if (!str.includes("\n")) return process.stdout.write(str);
+
+        process.stdout.write(str.split("\n").join(`\n${chalk.green("●")} `));
+      });
+
+      proc.stderr.on("data", (data) => {
+        process.stdout.write(data);
+      });
+
+      proc.on("exit", () => {
+        res();
+      });
+    });
   }
 
   private checksum(s: string) {
@@ -190,7 +262,7 @@ export class EmbeTSBuilder {
     );
   }
 
-  private loadChecksums() {
+  loadChecksums() {
     if (!existsSync(path.resolve(this.config.output, "checksums.json")))
       return {};
 
@@ -203,5 +275,90 @@ export class EmbeTSBuilder {
     const chk = this.loadChecksums()[key];
 
     return chk === this.checksum(s);
+  }
+
+  private transformCImports(code: string) {
+    const importRegex = /import[^"']*["'][^"']+["']/g;
+    const importMatches = code.match(importRegex) ?? [];
+
+    const imports = importMatches.map((match) => match.trim());
+    const splitCode = code.split(importRegex);
+
+    let newCode = "";
+
+    for (let i = 0; i < splitCode.length; i++) {
+      newCode += splitCode[i];
+
+      if (i < imports.length && imports[i].includes("bind:")) {
+        const parseRegex = /import([^"']*)from["']([^"']+)["']/gm;
+
+        const match = parseRegex.exec(imports[i]) ?? [];
+
+        this.transforms.cImports[match[1].trim()] = match[2]
+          .trim()
+          .split("bind:")[1];
+      }
+    }
+
+    return newCode;
+  }
+
+  private transformCRegistrations(code: string) {
+    const useCFunctionRegex = /useCFunction\(([^,]*)[,\s]*(["'].*?["'])\)/gm;
+    const splitRegex = /useCFunction\([^,]*[,\s]*["'].*?["']\)/g;
+
+    const matches = code.match(useCFunctionRegex) ?? [];
+    const splitCode = code.split(splitRegex);
+
+    let newCode = "";
+
+    for (let i = 0; i < splitCode.length; i++) {
+      newCode += splitCode[i];
+
+      if (i < matches.length) {
+        const match =
+          /useCFunction\(([^,]*)[,\s]*(["'].*?["'])\)/gm.exec(matches[i]) ?? [];
+
+        const args = match[2]
+          .split(",")
+          .map((a) => a.trim().replace(/["']([^"']*)["']/g, "$1"));
+        const id = match[1].replace(".", "_");
+
+        this.transforms.cRegistrations[id] = {
+          source: match[1],
+          ret: args[0],
+          args: args.slice(1),
+        };
+
+        newCode += `_cfn${id};`;
+      }
+    }
+
+    return newCode;
+  }
+
+  private copyCImports() {
+    const files = Object.entries(this.transforms.cImports)
+      .map(([k, v]) => [v, v.replace(/(.*)\.h/gm, "$1.cpp")])
+      .flat();
+
+    files.forEach((file) => {
+      const source = path.resolve(
+        process.cwd(),
+        path.dirname(this.config.entrypoint),
+        file
+      );
+      const dest = path.resolve(this.runtimeDirPath, path.basename(file));
+
+      if (!existsSync(source)) {
+        console.error(`File not found: ${source}`);
+        process.exit(1);
+      }
+
+      if (!existsSync(path.dirname(dest)))
+        mkdirSync(path.dirname(dest), { recursive: true });
+
+      copyFileSync(source, dest);
+    });
   }
 }

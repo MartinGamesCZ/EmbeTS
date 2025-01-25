@@ -16,7 +16,6 @@ export class EmbedTSConsole {
   private listeners: any[] = [];
 
   private logger: Logger;
-  private oLogger: Logger;
 
   constructor(config: ConsoleConfig) {
     this.config = config;
@@ -24,7 +23,6 @@ export class EmbedTSConsole {
     this.logger = new Logger(
       Logger.s.default("CONSOLE", "bgMagenta", "$message")
     );
-    this.oLogger = new Logger(Logger.s.default("o", "bgMagenta", "$message"));
   }
 
   open() {

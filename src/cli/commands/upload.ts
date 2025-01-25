@@ -1,9 +1,9 @@
-import { log } from "console";
 import { EmbedTSConsole } from "../../console";
 import { EmbeTSBuilder } from "../../compiler";
 import path from "path";
 import { existsSync, readFile, readFileSync } from "fs";
 import { BOARDS } from "src/config";
+import { Logger } from "src/utils/log";
 
 export const NAME = "upload";
 export const OPTIONS = [
@@ -23,6 +23,8 @@ export const OPTIONS = [
     description: "The output directory",
   },
 ];
+
+const cliLogger = new Logger(Logger.s.default("CLI", "bgWhite", "$message"));
 
 export async function exec(
   args: string[],
@@ -51,16 +53,16 @@ export async function exec(
 
   const _console = new EmbedTSConsole({
     port: options.port,
-    restartOnOpen: true,
+    restartOnOpen: false,
   });
 
   _console.open();
 
-  log("\n\nPlease restart your board in download mode");
+  cliLogger.log("Please restart your board in download mode");
 
   await awaitReady(_console);
 
-  log("Board is ready, uploading...");
+  cliLogger.log("Board is ready, uploading...");
 
   const builder = new EmbeTSBuilder({
     entrypoint: args[0] ?? config?.entrypoint,
@@ -68,8 +70,8 @@ export async function exec(
     board: options.board ?? config?.board,
   });
 
-  builder.build();
-  builder.upload(options.port);
+  await builder.build();
+  await builder.upload(options.port);
 
   const embetsConsole = new EmbedTSConsole({
     port: options.port,
