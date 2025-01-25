@@ -20,8 +20,13 @@ import JsUtilsFnErrorCreator from "./js_utils/error_creator";
 import JsUtilsFnGlobal from "./js_utils/global";
 import JsUtilsFnLoop from "./js_utils/loop";
 import NativeUtilsFnLog from "./native_utils/log";
+import {
+  NativeCoreFnNetWifiConnect,
+  NativeCoreImplNetWifiConnect,
+} from "./core/native/net";
+import ApiCoreNet from "./core/api/net";
 
-const INCLUDES = ["duktape.h", "Arduino.h"];
+const INCLUDES = ["duktape.h", "Arduino.h", "WiFi.h"];
 
 const NATIVE_UTILS_FUNCTIONS = [NativeUtilsFnLog()];
 const NATIVE_CORE_FUNCTIONS = [
@@ -30,6 +35,7 @@ const NATIVE_CORE_FUNCTIONS = [
   NativeCoreFnPinDWrite(),
   NativeCoreFnPinDRead(),
   NativeCoreFnPerformanceNow(),
+  NativeCoreFnNetWifiConnect(),
 ];
 const NATIVE_CORE_IMPLEMENTATIONS = [
   NativeCoreImplLog(),
@@ -37,6 +43,7 @@ const NATIVE_CORE_IMPLEMENTATIONS = [
   NativeCoreImplPinDWrite(),
   NativeCoreImplPinDRead(),
   NativeCoreImplPerformanceNow(),
+  NativeCoreImplNetWifiConnect(),
 ];
 
 const ENTRYPOINT = _function("void", "entrypoint", {}, [
@@ -254,6 +261,7 @@ const APIS = [
   ApiCoreBoard(),
   ApiCorePerformance(),
   ApiCoreTimers(),
+  ApiCoreNet(),
 ];
 const JS_UTILS = [
   // Global needs to be first

@@ -29,6 +29,7 @@
     "rootDir": "../../",
     "paths": {
       "embets:hardware": ["../../dist/lib/hardware/index.d.ts"],
+      "embets:net": ["../../dist/lib/net/index.d.ts"],
       "embets:imports": ["../../dist/lib/imports/index.d.ts"],
 
       "*.h": ["../../dist/lib/imports/type.d.ts"]
