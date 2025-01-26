@@ -28,7 +28,14 @@ import {
 } from "./core/native/net";
 import ApiCoreNet from "./core/api/net";
 
-const INCLUDES = ["duktape.h", "Arduino.h", "WiFi.h", "HTTPClient.h"];
+const INCLUDES = [
+  "duktape.h",
+  "Arduino.h",
+  "WiFi.h",
+  "HTTPClient.h",
+  "FS.h",
+  "LittleFS.h",
+];
 
 const NATIVE_UTILS_FUNCTIONS = [NativeUtilsFnLog()];
 const NATIVE_CORE_FUNCTIONS = [
@@ -52,10 +59,21 @@ const NATIVE_CORE_IMPLEMENTATIONS = [
 
 const ENTRYPOINT = _function("void", "entrypoint", {}, [
   _("Serial.begin(115200)"),
+  _("LittleFS.begin(true)"),
   _('bootLog("EmbeTS Runtime booting...")'),
   _("runtime_setup()"),
   _('runtimeLog("EmbeTS Runtime ready.")'),
-  _("runtime_eval(PROGRAM, false)"),
+  _if('!LittleFS.exists("/program.js")', [
+    _('Serial.write("Entrypoint not found.")'),
+    _("return"),
+  ]),
+  _('File program = LittleFS.open("/program.js", "r")'),
+  _('String PROGRAM = ""'),
+  "while (program.available()) {",
+  _("PROGRAM += (char)program.read()"),
+  _("}"),
+  _("program.close()"),
+  _("runtime_eval(PROGRAM.c_str(), false)"),
 ]);
 
 const RUNTIME_SETUP = _function("void", "runtime_setup", {}, [
@@ -93,7 +111,7 @@ const RUNTIME_EVAL = _function(
 const RUNTIME = [
   _includes(),
   "$2",
-  _program(),
+  //_program(),
   _(),
   _("duk_context *ctx"),
   _("TaskHandle_t BridgeTask"),
@@ -119,7 +137,12 @@ const RUNTIME = [
           _if('cmd == "\\x04"', [
             _('Serial.write("\\x01\\x00\\x00\\x77")'),
             _("String code = Serial.readStringUntil('\\x00\\x01\\x05')"),
-            _("runtime_eval(code.c_str(), false)"),
+            _('File file = LittleFS.open("/program.js", FILE_WRITE)'),
+            _if("!file", [_("Serial.write('FATAL NO FILE')")]),
+            _if("!file.print(code)", [_("Serial.write('FATAL FAIL')")]),
+            _("file.close()"),
+            _("ESP.restart()"),
+            //_("runtime_eval(code.c_str(), false)"),
           ]),
         ]),
       ]),
@@ -165,9 +188,9 @@ export default function Runtime(
   });
 }
 
-export function _program() {
+/*export function _program() {
   return `const PROGMEM char PROGRAM[] = R"$1";`;
-}
+}*/
 
 function _includes() {
   return INCLUDES.map((i) => `#include <${i}>`).join("\n");

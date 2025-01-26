@@ -36,14 +36,22 @@ export class EmbedTSConsole {
     this.proc.stdout.on("data", (data) => {
       if (data.includes("\x00\x01\x01\x77")) {
         this.listeners.forEach((listener) => {
-          if (listener.event === "ready") listener.callback();
+          if (listener.event === "ready") {
+            listener.callback();
+            if (listener.once)
+              this.listeners = this.listeners.filter((a) => a != listener);
+          }
         });
 
         return;
       }
 
       this.listeners.forEach((listener) => {
-        if (listener.event === "data") listener.callback(data.toString());
+        if (listener.event === "data") {
+          listener.callback(data.toString());
+          if (listener.once)
+            this.listeners = this.listeners.filter((a) => a != listener);
+        }
       });
     });
 
@@ -55,7 +63,11 @@ export class EmbedTSConsole {
   }
 
   on(event: "ready" | "data", callback: any) {
-    this.listeners.push({ event, callback });
+    this.listeners.push({ event, callback, once: false });
+  }
+
+  once(event: "ready" | "data", callback: any) {
+    this.listeners.push({ event, callback, once: true });
   }
 
   attach(stdin: NodeJS.ReadStream, stdout: NodeJS.WriteStream) {
@@ -100,6 +112,17 @@ export class EmbedTSConsole {
     sendCommand();
 
     process.stdout.write(chalk.magenta("●") + " ");
+  }
+
+  saveCode(code: string) {
+    this.eval(code);
+
+    return new Promise<void>((r) => {
+      this.once("ready", () => {
+        this.close();
+        r();
+      });
+    });
   }
 
   private sendRestartPacket() {

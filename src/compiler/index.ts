@@ -15,6 +15,7 @@ import { escapeQuotes, escapeRawCode } from "../utils/escape";
 import swc from "@swc/core";
 import { Logger } from "src/utils/log";
 import chalk from "chalk";
+import { EmbedTSConsole } from "src/console";
 
 export class EmbeTSBuilder {
   private readonly config: CompilerConfig;
@@ -114,6 +115,22 @@ export class EmbeTSBuilder {
       });
 
       proc.on("exit", () => {
+        res();
+      });
+    });
+
+    const con = new EmbedTSConsole({
+      port: port,
+      restartOnOpen: true,
+    });
+
+    con.attach(process.stdin, process.stdout);
+
+    await new Promise<void>((res) => {
+      con.once("ready", async () => {
+        await new Promise((r) => setTimeout(r, 1000));
+        await con.saveCode(readFileSync(this.compiledFilePath, "utf-8"));
+
         res();
       });
     });
