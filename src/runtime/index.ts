@@ -21,12 +21,14 @@ import JsUtilsFnGlobal from "./js_utils/global";
 import JsUtilsFnLoop from "./js_utils/loop";
 import NativeUtilsFnLog from "./native_utils/log";
 import {
+  NativeCoreFnNetHttpReqGet,
   NativeCoreFnNetWifiConnect,
+  NativeCoreImplNetHttpReqGet,
   NativeCoreImplNetWifiConnect,
 } from "./core/native/net";
 import ApiCoreNet from "./core/api/net";
 
-const INCLUDES = ["duktape.h", "Arduino.h", "WiFi.h"];
+const INCLUDES = ["duktape.h", "Arduino.h", "WiFi.h", "HTTPClient.h"];
 
 const NATIVE_UTILS_FUNCTIONS = [NativeUtilsFnLog()];
 const NATIVE_CORE_FUNCTIONS = [
@@ -36,6 +38,7 @@ const NATIVE_CORE_FUNCTIONS = [
   NativeCoreFnPinDRead(),
   NativeCoreFnPerformanceNow(),
   NativeCoreFnNetWifiConnect(),
+  NativeCoreFnNetHttpReqGet(),
 ];
 const NATIVE_CORE_IMPLEMENTATIONS = [
   NativeCoreImplLog(),
@@ -44,6 +47,7 @@ const NATIVE_CORE_IMPLEMENTATIONS = [
   NativeCoreImplPinDRead(),
   NativeCoreImplPerformanceNow(),
   NativeCoreImplNetWifiConnect(),
+  NativeCoreImplNetHttpReqGet(),
 ];
 
 const ENTRYPOINT = _function("void", "entrypoint", {}, [
@@ -93,6 +97,7 @@ const RUNTIME = [
   _(),
   _("duk_context *ctx"),
   _("TaskHandle_t BridgeTask"),
+  _("HTTPClient http"),
   _function(
     "void",
     "BridgeTaskImpl",
@@ -104,7 +109,7 @@ const RUNTIME = [
       _("Serial.write('\\x01')"),
       _("Serial.write('\\x01')"),
       _("Serial.write('\\x77')"),
-      _("delay(200)"),
+      _("delay(500)"),
       _("while (true) {"),
       _if("Serial.available()", [
         _("String cmd = Serial.readStringUntil('\\x77')"),
@@ -118,8 +123,8 @@ const RUNTIME = [
           ]),
         ]),
       ]),
-      _("runtime_eval(\"if (typeof ___loop != 'undefined') ___loop()\", true)"),
-      _("delay(10)"),
+      //_("runtime_eval(\"if (typeof ___loop != 'undefined') ___loop()\", true)"),
+      _("delay(50)"),
       _("}"),
     ]
   ),
