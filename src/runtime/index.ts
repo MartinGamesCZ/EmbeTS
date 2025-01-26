@@ -3,11 +3,11 @@ import ApiCoreBoard from "./core/api/board";
 import ApiCoreConsole from "./core/api/console";
 import ApiCorePerformance from "./core/api/performance";
 import ApiCoreTimers from "./core/api/timers";
-import { NativeCoreFnLog, NativeCoreImplLog } from "./core/native/log";
+import { NativeCoreFnLog, NativeCoreImplLog } from "./core/o_native/log";
 import {
   NativeCoreFnPerformanceNow,
   NativeCoreImplPerformanceNow,
-} from "./core/native/performance";
+} from "./core/o_native/performance";
 import {
   NativeCoreFnPinDRead,
   NativeCoreFnPinDWrite,
@@ -15,17 +15,17 @@ import {
   NativeCoreImplPinDRead,
   NativeCoreImplPinDWrite,
   NativeCoreImplPinMode,
-} from "./core/native/pin";
+} from "./core/o_native/pin";
 import JsUtilsFnErrorCreator from "./js_utils/error_creator";
 import JsUtilsFnGlobal from "./js_utils/global";
 import JsUtilsFnLoop from "./js_utils/loop";
-import NativeUtilsFnLog from "./native_utils/log";
+//import NativeUtilsFnLog from "./native_utils/log";
 import {
   NativeCoreFnNetHttpReqGet,
   NativeCoreFnNetWifiConnect,
   NativeCoreImplNetHttpReqGet,
   NativeCoreImplNetWifiConnect,
-} from "./core/native/net";
+} from "./core/o_native/net";
 import ApiCoreNet from "./core/api/net";
 
 const INCLUDES = [
@@ -37,7 +37,9 @@ const INCLUDES = [
   "LittleFS.h",
 ];
 
-const NATIVE_UTILS_FUNCTIONS = [NativeUtilsFnLog()];
+const NATIVE_UTILS_FUNCTIONS = [
+  /*NativeUtilsFnLog()*/
+];
 const NATIVE_CORE_FUNCTIONS = [
   NativeCoreFnLog(),
   NativeCoreFnPinMode(),
@@ -57,106 +59,13 @@ const NATIVE_CORE_IMPLEMENTATIONS = [
   NativeCoreImplNetHttpReqGet(),
 ];
 
-const ENTRYPOINT = _function("void", "entrypoint", {}, [
-  _("Serial.begin(115200)"),
-  _("LittleFS.begin(true)"),
-  _('bootLog("EmbeTS Runtime booting...")'),
-  _("runtime_setup()"),
-  _('runtimeLog("EmbeTS Runtime ready.")'),
-  _if('!LittleFS.exists("/program.js")', [
-    _('Serial.write("Entrypoint not found.")'),
-    _("return"),
-  ]),
-  _('File program = LittleFS.open("/program.js", "r")'),
-  _('String PROGRAM = ""'),
-  "while (program.available()) {",
-  _("PROGRAM += (char)program.read()"),
-  _("}"),
-  _("program.close()"),
-  _("runtime_eval(PROGRAM.c_str(), false)"),
-]);
-
-const RUNTIME_SETUP = _function("void", "runtime_setup", {}, [
-  _("ctx = duk_create_heap_default()"),
-  _(
-    'xTaskCreatePinnedToCore(BridgeTaskImpl, "BridgeTask", 10000, NULL, 1, &BridgeTask, 0)'
-  ),
-  _("$4"),
-  _(NATIVE_CORE_FUNCTIONS),
-]);
-
-const RUNTIME_EVAL = _function(
-  "void",
-  "runtime_eval",
-  {
-    "*code": "const char",
-    suppressLog: "bool",
-  },
-  [
-    //_('Serial.printf("\\n>>> Evaluating: %s\\n", code)'),
-    _if("!suppressLog", [_('runtimeLog("Evaluating code...\\n")')]),
-    _("duk_push_string(ctx, code)"),
-    _("duk_int_t rc = duk_peval(ctx)"),
-    _if("rc != 0", [
-      _("duk_safe_to_stacktrace(ctx, -1)"),
-      _('errorLog("", false)'),
-      _('Serial.printf("%s\\n", duk_safe_to_string(ctx, -1))'),
-    ]),
-    //_("String res = duk_get_string(ctx, -1)"),
-    //_('Serial.printf("\\n>>> Result: %s\\n", res ? res : "null")'),
-    _("duk_pop(ctx)"),
-  ]
-);
-
 const RUNTIME = [
   _includes(),
   "$2",
-  //_program(),
-  _(),
-  _("duk_context *ctx"),
-  _("TaskHandle_t BridgeTask"),
   _("HTTPClient http"),
-  _function(
-    "void",
-    "BridgeTaskImpl",
-    {
-      parameter: "void *",
-    },
-    [
-      _("Serial.write('\\x00')"),
-      _("Serial.write('\\x01')"),
-      _("Serial.write('\\x01')"),
-      _("Serial.write('\\x77')"),
-      _("delay(500)"),
-      _("while (true) {"),
-      _if("Serial.available()", [
-        _("String cmd = Serial.readStringUntil('\\x77')"),
-        _if('cmd.startsWith("\\x00\\x01")', [
-          _("cmd = cmd.substring(2)"),
-          _if('cmd == "\\x03"', [_("ESP.restart()")]),
-          _if('cmd == "\\x04"', [
-            _('Serial.write("\\x01\\x00\\x00\\x77")'),
-            _("String code = Serial.readStringUntil('\\x00\\x01\\x05')"),
-            _('File file = LittleFS.open("/program.js", FILE_WRITE)'),
-            _if("!file", [_("Serial.write('FATAL NO FILE')")]),
-            _if("!file.print(code)", [_("Serial.write('FATAL FAIL')")]),
-            _("file.close()"),
-            _("ESP.restart()"),
-            //_("runtime_eval(code.c_str(), false)"),
-          ]),
-        ]),
-      ]),
-      //_("runtime_eval(\"if (typeof ___loop != 'undefined') ___loop()\", true)"),
-      _("delay(50)"),
-      _("}"),
-    ]
-  ),
   _("$3"),
-  _(NATIVE_UTILS_FUNCTIONS),
+  //_(NATIVE_UTILS_FUNCTIONS),
   _(NATIVE_CORE_IMPLEMENTATIONS),
-  _(RUNTIME_SETUP),
-  _(RUNTIME_EVAL),
-  _(ENTRYPOINT),
   _function("void", "setup", {}, [_("entrypoint()")]),
   _function("void", "loop", {}, [
     //_('Serial.println("EmbeTS Runtime running...")'),
@@ -178,14 +87,25 @@ export default function Runtime(
   const nativeBindingsImpl = nativeBindings.map((nb) => nb[0]);
   const nativeBindingsDef = nativeBindings.map((nb) => nb[1]);
 
-  return _transform(RUNTIME, {
+  /*return _transform(RUNTIME, {
     1: code,
     2: Object.entries(cImports)
       .map(([k, v]) => `#include "./${path.basename(v)}"`)
       .join("\n"),
     3: nativeBindingsImpl.join("\n"),
     4: nativeBindingsDef.join("\n"),
-  });
+  });*/
+
+  return `#include "main.h"
+#include <Arduino.h>
+
+void setup() {
+  app_main();
+}
+
+void loop() {
+}
+`;
 }
 
 /*export function _program() {
@@ -286,18 +206,18 @@ export function generateNativeBinding(
 // --------------------- API ---------------------
 const APIS = [
   ApiCoreConsole(),
-  ApiCoreBoard(),
-  ApiCorePerformance(),
-  ApiCoreTimers(),
-  ApiCoreNet(),
+  //ApiCoreBoard(),
+  //ApiCorePerformance(),
+  //ApiCoreTimers(),
+  //ApiCoreNet(),
 ];
-const JS_UTILS = [
+const JS_UTILS: any = [
   // Global needs to be first
   // ---------------------------
-  JsUtilsFnGlobal(),
+  //JsUtilsFnGlobal(),
   // ---------------------------
-  JsUtilsFnLoop(),
-  JsUtilsFnErrorCreator(),
+  //JsUtilsFnLoop(),
+  //JsUtilsFnErrorCreator(),
 ];
 
 export function Api() {

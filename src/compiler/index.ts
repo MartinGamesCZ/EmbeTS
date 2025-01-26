@@ -5,7 +5,9 @@ import {
   copyFileSync,
   existsSync,
   mkdirSync,
+  readdirSync,
   readFileSync,
+  statSync,
   writeFileSync,
 } from "fs";
 import Runtime, { Api } from "../runtime";
@@ -78,6 +80,7 @@ export class EmbeTSBuilder {
     this.copyCImports();
 
     if (this.config.onlyJs === false || !this.config.onlyJs) {
+      this.copyRuntimeFiles();
       this.buildRuntime();
       await this.compileImage();
     }
@@ -197,6 +200,45 @@ export class EmbeTSBuilder {
     );
   }
 
+  private copyRuntimeFiles() {
+    dlog("Copying runtime files...");
+
+    const dir = path.resolve(import.meta.dirname, "../runtime/core/native");
+    const dest = path.resolve(this.runtimeDirPath);
+
+    function copyDir(src: string) {
+      const files = readdirSync(src);
+
+      files.forEach((file) => {
+        const source = path.resolve(src, file);
+        const destPath = path.resolve(dest, file);
+
+        if (!existsSync(dest)) mkdirSync(dest, { recursive: true });
+
+        if (statSync(source).isDirectory()) return copyDir(source);
+
+        let code = readFileSync(source, "utf-8");
+
+        // Flatten all #include statements
+        let newCode = "";
+
+        code.split("\n").forEach((line) => {
+          if (line.trim().startsWith("#include") && line.includes("./")) {
+            const file = line.replace("#include", "").trim();
+
+            const newPath = path.basename(file.replaceAll('"', ""));
+
+            newCode += `#include "${newPath}"\n`;
+          } else newCode += line + "\n";
+        });
+
+        writeFileSync(destPath, newCode, "utf-8");
+      });
+    }
+
+    copyDir(dir);
+  }
+
   private buildRuntime() {
     dlog("Building runtime...");
 
@@ -225,7 +267,8 @@ export class EmbeTSBuilder {
           path.resolve(this.config.output, "runtime/runtime.ino"),
           "utf-8"
         )
-      )
+      ) &&
+      !process.env.DISABLE_CHECKSUM
     ) {
       this.logger.log("Compiled code is up to date.");
       return;

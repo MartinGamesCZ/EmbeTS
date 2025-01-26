@@ -1,4 +1,4 @@
-import { WiFi, request } from "embets:net";
+/*import { WiFi, request } from "embets:net";
 
 const wifi = new WiFi("martin/local", "localmartin07");
 
@@ -17,4 +17,6 @@ for (let i = 0; i < 10; i++) {
   console.log(response.error);
   console.log(response.statusCode);
   console.log(response.text());
-}
+}*/
+
+console.log("Hello, world!");
