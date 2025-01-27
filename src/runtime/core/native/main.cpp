@@ -42,6 +42,9 @@ void app_loop(void *parameter) {
         }
 
         runtimeLog("Program updated.");
+        bridge_wsequence_flashed();
+
+        delay(100);
 
         os_restart();
       }

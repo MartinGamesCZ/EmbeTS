@@ -73,6 +73,8 @@ export async function exec(
   await builder.build();
   await builder.upload(options.port);
 
+  cliLogger.log("Upload complete! Launching console...");
+
   const embetsConsole = new EmbedTSConsole({
     port: options.port,
     restartOnOpen: true,

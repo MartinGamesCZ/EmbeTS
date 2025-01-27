@@ -43,6 +43,8 @@ String fs_read(const char *path) {
 }
 
 bool fs_write(const char *path, String content) {
+  fs_create_structure();
+
   File file = LittleFS.open(path, "w");
 
   if (!file)

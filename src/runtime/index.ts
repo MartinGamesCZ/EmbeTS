@@ -3,7 +3,6 @@ import ApiCoreBoard from "./core/api/board";
 import ApiCoreConsole from "./core/api/console";
 import ApiCorePerformance from "./core/api/performance";
 import ApiCoreTimers from "./core/api/timers";
-import { NativeCoreFnLog, NativeCoreImplLog } from "./core/o_native/log";
 import {
   NativeCoreFnPerformanceNow,
   NativeCoreImplPerformanceNow,
@@ -40,24 +39,6 @@ const INCLUDES = [
 const NATIVE_UTILS_FUNCTIONS = [
   /*NativeUtilsFnLog()*/
 ];
-const NATIVE_CORE_FUNCTIONS = [
-  NativeCoreFnLog(),
-  NativeCoreFnPinMode(),
-  NativeCoreFnPinDWrite(),
-  NativeCoreFnPinDRead(),
-  NativeCoreFnPerformanceNow(),
-  NativeCoreFnNetWifiConnect(),
-  NativeCoreFnNetHttpReqGet(),
-];
-const NATIVE_CORE_IMPLEMENTATIONS = [
-  NativeCoreImplLog(),
-  NativeCoreImplPinMode(),
-  NativeCoreImplPinDWrite(),
-  NativeCoreImplPinDRead(),
-  NativeCoreImplPerformanceNow(),
-  NativeCoreImplNetWifiConnect(),
-  NativeCoreImplNetHttpReqGet(),
-];
 
 const RUNTIME = [
   _includes(),
@@ -65,7 +46,6 @@ const RUNTIME = [
   _("HTTPClient http"),
   _("$3"),
   //_(NATIVE_UTILS_FUNCTIONS),
-  _(NATIVE_CORE_IMPLEMENTATIONS),
   _function("void", "setup", {}, [_("entrypoint()")]),
   _function("void", "loop", {}, [
     //_('Serial.println("EmbeTS Runtime running...")'),

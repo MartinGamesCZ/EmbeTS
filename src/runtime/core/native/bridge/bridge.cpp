@@ -15,6 +15,7 @@ void bridge_wsequence_pckt(char code) {
 }
 
 void bridge_wsequence_ready() { bridge_wsequence_pckt('\x01'); }
+void bridge_wsequence_flashed() { bridge_wsequence_pckt('\x06'); }
 
 bool bridge_cmd_available() { return Serial.available(); }
 
@@ -30,7 +31,17 @@ String bridge_cmd_read() {
 String bridge_program_read() {
   bridge_wsequence_ready();
 
-  String code = Serial.readStringUntil('\x00\x01\x05');
+  String code = "";
+
+  while (true) {
+    while (!Serial.available())
+      delay(10);
+
+    code += Serial.readString();
+
+    if (code.indexOf("\x00\x01\x05") >= 0)
+      break;
+  }
 
   return code;
 }

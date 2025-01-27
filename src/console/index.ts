@@ -46,6 +46,18 @@ export class EmbedTSConsole {
         return;
       }
 
+      if (data.includes("\x00\x01\x06\x77")) {
+        this.listeners.forEach((listener) => {
+          if (listener.event === "flashed") {
+            listener.callback();
+            if (listener.once)
+              this.listeners = this.listeners.filter((a) => a != listener);
+          }
+        });
+
+        return;
+      }
+
       this.listeners.forEach((listener) => {
         if (listener.event === "data") {
           listener.callback(data.toString());
@@ -62,11 +74,11 @@ export class EmbedTSConsole {
     if (this.proc) this.proc.kill();
   }
 
-  on(event: "ready" | "data", callback: any) {
+  on(event: "ready" | "data" | "flashed", callback: any) {
     this.listeners.push({ event, callback, once: false });
   }
 
-  once(event: "ready" | "data", callback: any) {
+  once(event: "ready" | "data" | "flashed", callback: any) {
     this.listeners.push({ event, callback, once: true });
   }
 
@@ -118,9 +130,9 @@ export class EmbedTSConsole {
     this.eval(code);
 
     return new Promise<void>((r) => {
-      this.once("ready", () => {
-        this.close();
+      this.once("flashed", () => {
         r();
+        this.close();
       });
     });
   }

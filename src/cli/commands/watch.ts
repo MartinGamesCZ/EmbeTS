@@ -103,33 +103,39 @@ export async function exec(
 
         let transformsChecksum = checksums.transforms;
 
-        watchFile(args[0] ?? config?.entrypoint, async () => {
-          console.log();
-          devLogger.log("File changed, rebuilding...");
-          await watchBuilder.build();
+        watchFile(
+          args[0] ?? config?.entrypoint,
+          {
+            interval: 100,
+          },
+          async () => {
+            console.log();
+            devLogger.log("File changed, rebuilding...");
+            await watchBuilder.build();
 
-          const checksums = builder.loadChecksums();
+            const checksums = builder.loadChecksums();
 
-          if (checksums.transforms != transformsChecksum) {
-            unwatchFile(args[0] ?? config?.entrypoint);
+            if (checksums.transforms != transformsChecksum) {
+              unwatchFile(args[0] ?? config?.entrypoint);
 
-            embetsConsole.close();
+              embetsConsole.close();
 
-            res();
+              res();
+            }
+
+            embetsConsole.eval(
+              readFileSync(
+                path.join(
+                  process.cwd(),
+                  (config?.output ?? "build") + "/compiled.js"
+                ),
+                "utf-8"
+              )
+            );
+
+            transformsChecksum = checksums.transforms;
           }
-
-          embetsConsole.eval(
-            readFileSync(
-              path.join(
-                process.cwd(),
-                (config?.output ?? "build") + "/compiled.js"
-              ),
-              "utf-8"
-            )
-          );
-
-          transformsChecksum = checksums.transforms;
-        });
+        );
       });
     });
   }

@@ -137,6 +137,8 @@ export class EmbeTSBuilder {
         res();
       });
     });
+
+    con.close();
   }
 
   private checkEnvironment() {
@@ -206,7 +208,51 @@ export class EmbeTSBuilder {
     const dir = path.resolve(import.meta.dirname, "../runtime/core/native");
     const dest = path.resolve(this.runtimeDirPath);
 
-    function copyDir(src: string) {
+    function copyDir(p: string, prefix: string) {
+      const files = readdirSync(p);
+
+      files.forEach((file) => {
+        const source = path.resolve(p, file);
+        const destPath = path.resolve(
+          dest,
+          prefix + (prefix.length > 0 ? "_" : "") + path.basename(file)
+        );
+
+        if (!existsSync(dest)) mkdirSync(dest, { recursive: true });
+        if (statSync(source).isDirectory())
+          return copyDir(
+            source,
+            prefix + (prefix.length > 0 ? "_" : "") + file
+          );
+
+        let code = readFileSync(source, "utf-8");
+
+        // Flatten all #include statements
+        let newCode = "";
+
+        code.split("\n").forEach((line) => {
+          if (line.trim().startsWith("#include") && line.includes('"')) {
+            const file = line.replace("#include", "").trim();
+
+            const newPath = file
+              .replaceAll('"duktape.h', "lib_duktape_duktape.h")
+              .replaceAll('"duk_config.h', "lib_duktape_duk_config.h")
+              .replaceAll('"', "")
+              .replace("../", "")
+              .replace("./", prefix + (prefix.length > 0 ? "_" : ""))
+              .replaceAll("/", "_");
+
+            newCode += `#include "${newPath}"\n`;
+          } else newCode += line + "\n";
+        });
+
+        writeFileSync(destPath, newCode, "utf-8");
+      });
+    }
+
+    copyDir(dir, "");
+
+    /*function copyDir(src: string) {
       const files = readdirSync(src);
 
       files.forEach((file) => {
@@ -236,7 +282,7 @@ export class EmbeTSBuilder {
       });
     }
 
-    copyDir(dir);
+    copyDir(dir);*/
   }
 
   private buildRuntime() {
@@ -296,7 +342,12 @@ export class EmbeTSBuilder {
         process.stdout.write(data);
       });
 
-      proc.on("exit", () => {
+      proc.on("exit", (code) => {
+        if (code !== 0) {
+          console.error("Failed to compile image.");
+          process.exit(1);
+        }
+
         res();
       });
     });
