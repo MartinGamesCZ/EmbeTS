@@ -1,6 +1,6 @@
 /*import { WiFi, request } from "embets:net";
 
-const wifi = new WiFi("martin/local", "localmartin07");
+const wifi = new WiFi("xxxxxxxxxx", "xxxxxxxxxxxxx");
 
 wifi.connect();
 console.log("Wifi connected");
@@ -18,20 +18,17 @@ for (let i = 0; i < 10; i++) {
   console.log(response.statusCode);
   console.log(response.text());
 }*/
-import { board, PinMode, PinState } from "embets:hardware";
 
-console.log("Program started!");
+const PWD = "xxxxxxxxxxxx";
 
-board.pins(0).setMode(PinMode.INPUT_PULLUP);
+import { WiFi } from "embets:net";
 
-var prevState = PinState.HIGH;
+const wifi = new WiFi("xxxxxxxxx", PWD);
 
-while (true) {
-  const state = board.pins(0).getState();
+wifi.connect();
+console.log("Wifi connected");
 
-  if (state != prevState && state == PinState.LOW) {
-    console.log("Rolling the dice " + (Math.floor(Math.random() * 7) + 1));
-  }
+console.log(wifi.connected);
+console.log(wifi.ip);
 
-  prevState = state;
-}
+wifi.disconnect();

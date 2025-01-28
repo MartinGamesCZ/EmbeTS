@@ -129,6 +129,12 @@ function awaitReady(_console: EmbedTSConsole) {
   return new Promise<void>((resolve) => {
     let buf = "";
 
+    if (process.env.NO_UPLOAD) {
+      resolve();
+      _console.close();
+      return;
+    }
+
     _console.on("data", (c: string) => {
       buf += c;
 

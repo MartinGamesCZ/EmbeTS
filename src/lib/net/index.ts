@@ -3,6 +3,9 @@ declare class WiFi {
   private readonly password;
   constructor(ssid: string, password: string);
   connect(): void;
+  disconnect(): void;
+  get connected(): boolean;
+  get ip(): string;
 }
 declare function request(
   url: string,

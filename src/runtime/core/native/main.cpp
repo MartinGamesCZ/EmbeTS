@@ -21,6 +21,10 @@ void app_program() {
     return;
   }
 
+  /*Serial.println(program);
+
+  delay(500);*/
+
   runtime_eval(program.c_str(), false);
 }
 
@@ -29,7 +33,7 @@ void app_loop(void *parameter) {
   delay(100);
 
   String buffer;
-  buffer.reserve(32768);
+  buffer.reserve(1024);
 
   while (true) {
     if (Serial.available()) {
@@ -70,7 +74,7 @@ void app_loop(void *parameter) {
         buffer = "";
       }
     }
-    delay(10);
+    delay(5);
   }
 }
 
@@ -82,7 +86,7 @@ void app_main(bool shouldWipe) {
   if (shouldWipe)
     fs_wipe();
 
-  xTaskCreatePinnedToCore(&app_loop, "LoopTask", 100000, NULL, 1, &LoopTask, 0);
+  xTaskCreatePinnedToCore(app_loop, "LoopTask", 10000, NULL, 1, &LoopTask, 0);
 
   app_program();
 }

@@ -183,7 +183,7 @@ const APIS = [
   ApiCoreBoard(),
   //ApiCorePerformance(),
   //ApiCoreTimers(),
-  //ApiCoreNet(),
+  ApiCoreNet(),
 ];
 const JS_UTILS: any = [
   // Global needs to be first

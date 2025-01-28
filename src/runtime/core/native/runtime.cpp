@@ -1,10 +1,12 @@
 #include "./runtime.h"
+#include "./api/hardware.h"
 #include "./api/log.h"
 #include "./bridge/bridge.h"
 #include "./fs/fs.h"
 #include "./lib/duktape/duktape.h"
+#include "./net/net.h"
 #include "./utils/log.h"
-#include "api/hardware.h"
+#include "api/net.h"
 #include <Arduino.h>
 #include <HardwareSerial.h>
 
@@ -24,6 +26,7 @@ void runtime_setup() {
   bootLog("EmbeTS Runtime booting...");
 
   fs_init();
+  // net_init();
 
   // TODO: Create bridge task
   // TODO: Register native functions
@@ -31,6 +34,7 @@ void runtime_setup() {
 
   register_runtime_native_log(ctx);
   register_runtime_native_hardware(ctx);
+  register_runtime_native_net(ctx);
 }
 
 void runtime_eval(const char *code, bool suppressLog) {

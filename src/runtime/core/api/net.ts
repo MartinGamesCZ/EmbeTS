@@ -1,7 +1,9 @@
-declare function $__native_net_wifi_connect(
-  ssid: string,
-  password: string
-): void;
+declare const $__native_net_sta: {
+  connected: () => boolean;
+  connect: (ssid: string, password: string) => void;
+  disconnect: () => void;
+  ip: () => string;
+};
 declare function $__native_net_http_req_get(url: string): void;
 
 function IMPL() {
@@ -15,12 +17,24 @@ function IMPL() {
     }
 
     connect() {
-      $__native_net_wifi_connect(this.ssid, this.password);
+      $__native_net_sta.connect(this.ssid, this.password);
+    }
+
+    disconnect() {
+      $__native_net_sta.disconnect();
+    }
+
+    get connected() {
+      return $__native_net_sta.connected();
+    }
+
+    get ip() {
+      return $__native_net_sta.ip();
     }
   }
 
   // TODO: Make this function async
-  function request(url: string, config: any) {
+  /*function request(url: string, config: any) {
     var fn = $__native_net_http_req_get;
 
     if (config.method && config.method != "GET") {
@@ -35,7 +49,7 @@ function IMPL() {
       statusCode: data.code,
       error: data.error
     };
-  }
+  }*/
 }
 
 export default function ApiCoreNet() {
