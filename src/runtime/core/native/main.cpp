@@ -5,9 +5,13 @@
 #include "./os/os.h"
 #include "./runtime.h"
 #include "./utils/log.h"
+#include "HardwareSerial.h"
 #include <Arduino.h>
 
 TaskHandle_t LoopTask;
+
+const char *EMBEDTS_START_SEQ = "$$$EMBETS$STARTSEQ$$$";
+const char *EMBEDTS_END_SEQ = "$$$EMBETS$ENDSEQ$$$";
 
 void app_program() {
   String program = fs_read("/boot/index.js");
@@ -22,46 +26,63 @@ void app_program() {
 
 void app_loop(void *parameter) {
   bridge_wsequence_ready();
-
   delay(100);
 
+  String buffer;
+  buffer.reserve(32768);
+
   while (true) {
-    if (bridge_cmd_available()) {
-      String cmd = bridge_cmd_read();
+    if (Serial.available()) {
+      String data = Serial.readStringUntil('\n');
+      buffer += data;
 
-      if (cmd == "\x03")
-        os_restart();
+      if (bridge_pckt_is(buffer)) {
+        String packet = bridge_pckt_read(buffer);
+        String cmd = bridge_pckt_extract_command(packet);
 
-      if (cmd == "\x04") {
-        String program = bridge_program_read();
+        if (cmd == "RESTART")
+          os_restart();
 
-        bool fileWritten = fs_write("/boot/index.js", program);
-        if (!fileWritten) {
-          errorLog("Failed to write program to file.", true);
-          continue;
+        if (cmd == "FLASH") {
+          int dataLength = bridge_pckt_extract_length(packet);
+          String body = bridge_pckt_extract_data(packet);
+
+          if (dataLength != body.length()) {
+            errorLog("Data length mismatch.", true);
+            buffer = "";
+
+            bridge_wsequence_flasherr();
+
+            continue;
+          }
+
+          bool fileWritten = fs_write("/boot/index.js", body);
+          if (!fileWritten)
+            errorLog("Failed to write program to file.", true);
+          else {
+            runtimeLog("Program updated.");
+            bridge_wsequence_flashed();
+            delay(100);
+            os_restart();
+          }
         }
 
-        runtimeLog("Program updated.");
-        bridge_wsequence_flashed();
-
-        delay(100);
-
-        os_restart();
+        buffer = "";
       }
     }
-
-    // TODO: Events, timers
-
-    delay(50);
+    delay(10);
   }
 }
 
-void app_main() {
+void app_main(bool shouldWipe) {
   runtime_setup();
   runtimeLog("EmbeTS Runtime ready.");
   delay(100);
 
-  xTaskCreatePinnedToCore(&app_loop, "LoopTask", 10000, NULL, 1, &LoopTask, 0);
+  if (shouldWipe)
+    fs_wipe();
+
+  xTaskCreatePinnedToCore(&app_loop, "LoopTask", 100000, NULL, 1, &LoopTask, 0);
 
   app_program();
 }

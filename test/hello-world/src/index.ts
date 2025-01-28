@@ -18,5 +18,20 @@ for (let i = 0; i < 10; i++) {
   console.log(response.statusCode);
   console.log(response.text());
 }*/
+import { board, PinMode, PinState } from "embets:hardware";
 
-console.log("Program started");
+console.log("Program started!");
+
+board.pins(0).setMode(PinMode.INPUT_PULLUP);
+
+var prevState = PinState.HIGH;
+
+while (true) {
+  const state = board.pins(0).getState();
+
+  if (state != prevState && state == PinState.LOW) {
+    console.log("Rolling the dice " + (Math.floor(Math.random() * 7) + 1));
+  }
+
+  prevState = state;
+}

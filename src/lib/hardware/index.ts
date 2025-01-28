@@ -10,10 +10,11 @@ declare enum PinState {
 }
 
 declare const board: {
-  pins: {
+  pins: (pin: number) => {
     setMode: (mode: 1 | 3 | 5 | 9 | PinMode) => void;
     setState: (value: 0 | 1 | boolean | PinState) => void;
-  }[];
+    getState: () => 0 | 1;
+  };
 };
 
 export { board, PinMode, PinState };

@@ -7,14 +7,6 @@ import {
   NativeCoreFnPerformanceNow,
   NativeCoreImplPerformanceNow,
 } from "./core/o_native/performance";
-import {
-  NativeCoreFnPinDRead,
-  NativeCoreFnPinDWrite,
-  NativeCoreFnPinMode,
-  NativeCoreImplPinDRead,
-  NativeCoreImplPinDWrite,
-  NativeCoreImplPinMode,
-} from "./core/o_native/pin";
 import JsUtilsFnErrorCreator from "./js_utils/error_creator";
 import JsUtilsFnGlobal from "./js_utils/global";
 import JsUtilsFnLoop from "./js_utils/loop";
@@ -79,8 +71,10 @@ export default function Runtime(
   return `#include "main.h"
 #include <Arduino.h>
 
+#define EMBETS_FS_WIPE ${process.env.EMBETS_FS_WIPE ? "true" : "false"}
+
 void setup() {
-  app_main();
+  app_main(EMBETS_FS_WIPE);
 }
 
 void loop() {
@@ -186,7 +180,7 @@ export function generateNativeBinding(
 // --------------------- API ---------------------
 const APIS = [
   ApiCoreConsole(),
-  //ApiCoreBoard(),
+  ApiCoreBoard(),
   //ApiCorePerformance(),
   //ApiCoreTimers(),
   //ApiCoreNet(),

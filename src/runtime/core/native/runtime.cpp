@@ -1,9 +1,10 @@
 #include "./runtime.h"
-#include "./api/mod_log.h"
+#include "./api/log.h"
 #include "./bridge/bridge.h"
 #include "./fs/fs.h"
 #include "./lib/duktape/duktape.h"
 #include "./utils/log.h"
+#include "api/hardware.h"
 #include <Arduino.h>
 #include <HardwareSerial.h>
 
@@ -29,6 +30,7 @@ void runtime_setup() {
   // TODO: Register native bindings
 
   register_runtime_native_log(ctx);
+  register_runtime_native_hardware(ctx);
 }
 
 void runtime_eval(const char *code, bool suppressLog) {
@@ -40,6 +42,7 @@ void runtime_eval(const char *code, bool suppressLog) {
 
   if (returnCode != 0) {
     duk_safe_to_stacktrace(ctx, -1);
+
     errorLog("", false);
     Serial.println(duk_safe_to_string(ctx, -1));
   }

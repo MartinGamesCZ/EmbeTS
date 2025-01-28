@@ -6,5 +6,6 @@
 void fs_init();
 String fs_read(const char *path);
 bool fs_write(const char *path, String content);
+void fs_wipe();
 
 #endif

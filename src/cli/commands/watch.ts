@@ -1,6 +1,6 @@
 import { EmbedTSConsole } from "../../console";
 import { EmbeTSBuilder } from "../../compiler";
-import { watchFile, readFileSync, existsSync, unwatchFile } from "fs";
+import { watchFile, readFileSync, existsSync, unwatchFile, statSync } from "fs";
 import path from "path";
 import { BOARDS } from "src/config";
 import { Logger } from "src/utils/log";
@@ -52,93 +52,77 @@ export async function exec(
     options.board =
       BOARDS.find((b) => b.id === config.board)?.fqbn ?? options.board;
 
-  while (true) {
-    const _console = new EmbedTSConsole({
-      port: options.port,
-      restartOnOpen: false,
-    });
+  const _console = new EmbedTSConsole({
+    port: options.port,
+    restartOnOpen: false,
+  });
 
-    cliLogger.log("Please restart your board in download mode");
+  cliLogger.log("Please restart your board in download mode");
 
-    _console.open();
+  _console.open();
 
-    await awaitReady(_console);
+  await awaitReady(_console);
 
-    cliLogger.log("Board is ready, uploading...");
+  cliLogger.log("Board is ready, uploading...");
 
-    const builder = new EmbeTSBuilder({
-      entrypoint: args[0] ?? config?.entrypoint,
-      output: options.outDir ?? config?.output ?? "build",
-      board:
-        options.board ?? BOARDS.find((b) => b.id === config?.board)?.fqbn ?? "",
-    });
+  const builder = new EmbeTSBuilder({
+    entrypoint: args[0] ?? config?.entrypoint,
+    output: options.outDir ?? config?.output ?? "build",
+    board:
+      options.board ?? BOARDS.find((b) => b.id === config?.board)?.fqbn ?? "",
+  });
 
+  if (!process.env.NO_UPLOAD) {
     await builder.build();
     await builder.upload(options.port);
-
-    const embetsConsole = new EmbedTSConsole({
-      port: options.port,
-      restartOnOpen: true,
-    });
-
-    const watchBuilder = new EmbeTSBuilder({
-      entrypoint: args[0] ?? config?.entrypoint,
-      output: options.outDir ?? config?.output ?? "build",
-      board:
-        options.board ?? BOARDS.find((b) => b.id === config?.board)?.fqbn ?? "",
-      onlyJs: true,
-    });
-
-    embetsConsole.attach(process.stdin, process.stdout);
-
-    let listening = false;
-
-    await new Promise<void>((res) => {
-      embetsConsole.on("ready", () => {
-        if (listening) return;
-
-        listening = true;
-
-        const checksums = builder.loadChecksums();
-
-        let transformsChecksum = checksums.transforms;
-
-        watchFile(
-          args[0] ?? config?.entrypoint,
-          {
-            interval: 100,
-          },
-          async () => {
-            console.log();
-            devLogger.log("File changed, rebuilding...");
-            await watchBuilder.build();
-
-            const checksums = builder.loadChecksums();
-
-            if (checksums.transforms != transformsChecksum) {
-              unwatchFile(args[0] ?? config?.entrypoint);
-
-              embetsConsole.close();
-
-              res();
-            }
-
-            embetsConsole.eval(
-              readFileSync(
-                path.join(
-                  process.cwd(),
-                  (config?.output ?? "build") + "/compiled.js"
-                ),
-                "utf-8"
-              )
-            );
-
-            transformsChecksum = checksums.transforms;
-          }
-        );
-      });
-    });
   }
+
+  const embetsConsole = new EmbedTSConsole({
+    port: options.port,
+    restartOnOpen: true,
+  });
+
+  const watchBuilder = new EmbeTSBuilder({
+    entrypoint: args[0] ?? config?.entrypoint,
+    output: options.outDir ?? config?.output ?? "build",
+    board:
+      options.board ?? BOARDS.find((b) => b.id === config?.board)?.fqbn ?? "",
+    onlyJs: true,
+  });
+
+  embetsConsole.attach(process.stdin, process.stdout);
+
+  embetsConsole.once("ready", () => {
+    const checksums = builder.loadChecksums();
+
+    let transformsChecksum = checksums.transforms;
+
+    watch(args[0] ?? config?.entrypoint, async () => {
+      console.log();
+      devLogger.log("File changed, rebuilding...");
+      await watchBuilder.build();
+
+      const checksums = builder.loadChecksums();
+
+      /*if (checksums.transforms != transformsChecksum) {
+        unwatchFile(args[0] ?? config?.entrypoint);
+
+        embetsConsole.close();
+      }*/
+
+      embetsConsole.eval(
+        readFileSync(
+          path.join(
+            process.cwd(),
+            (config?.output ?? "build") + "/compiled.js"
+          ),
+          "utf-8"
+        )
+      );
+
+      transformsChecksum = checksums.transforms;
+    });
+  });
 }
 
 function awaitReady(_console: EmbedTSConsole) {
@@ -153,5 +137,12 @@ function awaitReady(_console: EmbedTSConsole) {
         _console.close();
       }
     });
+  });
+}
+
+function watch(path: string, cb: () => void) {
+  console.log("Adding watcher");
+  watchFile(path, { persistent: true, interval: 1000 }, (curr, prev) => {
+    if (curr.mtime.getTime() !== prev.mtime.getTime()) cb();
   });
 }

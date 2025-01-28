@@ -47,6 +47,8 @@ bool fs_write(const char *path, String content) {
 
   File file = LittleFS.open(path, "w");
 
+  delay(1000);
+
   if (!file)
     return false;
 
@@ -56,4 +58,11 @@ bool fs_write(const char *path, String content) {
   file.close();
 
   return true;
+}
+
+void fs_wipe() {
+  if (!LittleFS.begin(true))
+    errorLog("Failed to mount file system", true);
+
+  LittleFS.format();
 }

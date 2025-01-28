@@ -8,10 +8,12 @@ void bridge_init();
 
 void bridge_wsequence_ready();
 void bridge_wsequence_flashed();
+void bridge_wsequence_flasherr();
 
-bool bridge_cmd_available();
-String bridge_cmd_read();
-
-String bridge_program_read();
+bool bridge_pckt_is(String pckt);
+String bridge_pckt_read(String data);
+String bridge_pckt_extract_command(String data);
+int bridge_pckt_extract_length(String data);
+String bridge_pckt_extract_data(String data);
 
 #endif

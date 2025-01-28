@@ -1,11 +1,7 @@
-declare function $__native_pin_mode(pin: number | string, mode: number): void;
-declare function $__native_pin_dwrite(
-  pin: number | string,
-  value: number
-): void;
-declare function $__native_pin_dread(pin: number | string): number;
-declare const ___global: {
-  loopCallbacks?: (() => void)[];
+declare const $__native_hardware_board: {
+  setMode: (pin: number | string, mode: number) => void;
+  setState: (pin: number | string, value: number) => void;
+  getState: (pin: number | string) => number;
 };
 
 declare enum PinMode {
@@ -21,27 +17,19 @@ declare enum PinState {
 
 function IMPL() {
   const board = {
-    pins: new Proxy(
-      {},
-      {
-        get(_, prop: string) {
-          return {
-            setMode: function (mode: 1 | 3 | 5 | 9 | PinMode) {
-              $__native_pin_mode(parseInt(prop), mode);
-            },
-            setState: function (value: 0 | 1 | boolean | PinState) {
-              $__native_pin_dwrite(
-                parseInt(prop),
-                typeof value == "number" ? value : value ? 1 : 0
-              );
-            },
-            getState: function (): 0 | 1 {
-              return $__native_pin_dread(parseInt(prop)) as 0 | 1;
-            },
-          };
+    pins: function (pin: number) {
+      return {
+        setMode: (mode: number) => {
+          $__native_hardware_board.setMode(pin, mode);
         },
-      }
-    ),
+        setState: (value: number) => {
+          $__native_hardware_board.setState(pin, value);
+        },
+        getState: () => {
+          return $__native_hardware_board.getState(pin);
+        },
+      };
+    },
   };
 
   const PinMode = {
