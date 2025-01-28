@@ -26,7 +26,7 @@ void runtime_setup() {
   bootLog("EmbeTS Runtime booting...");
 
   fs_init();
-  // net_init();
+  net_init();
 
   // TODO: Create bridge task
   // TODO: Register native functions

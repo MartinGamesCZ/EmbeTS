@@ -147,8 +147,7 @@ function awaitReady(_console: EmbedTSConsole) {
 }
 
 function watch(path: string, cb: () => void) {
-  console.log("Adding watcher");
-  watchFile(path, { persistent: true, interval: 1000 }, (curr, prev) => {
+  watchFile(path, { persistent: true, interval: 300 }, (curr, prev) => {
     if (curr.mtime.getTime() !== prev.mtime.getTime()) cb();
   });
 }
