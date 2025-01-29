@@ -8,6 +8,9 @@
 static duk_ret_t impl_runtime_native_process_env(duk_context *ctx) {
   String envJson = fs_read("/boot/env.json");
 
+  if (envJson == "")
+    envJson = "{}";
+
   duk_push_string(ctx, envJson.c_str());
 
   return 1;
