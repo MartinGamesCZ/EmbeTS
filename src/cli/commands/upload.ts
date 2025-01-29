@@ -58,7 +58,9 @@ export async function exec(
 
   _console.open();
 
-  cliLogger.log("Please restart your board in download mode");
+  cliLogger.log(
+    "Please restart your board in download mode -- Press Enter to skip (or if stuck)"
+  );
 
   await awaitReady(_console);
 
@@ -90,7 +92,16 @@ function awaitReady(_console: EmbedTSConsole) {
     _console.on("data", (c: string) => {
       buf += c;
 
+      process.stdin.once("data", (d) => {
+        if (d.toString() == "\n") {
+          resolve();
+          _console.close();
+        }
+      });
+
       if (buf.includes("(POWERON_RESET)") && buf.includes("DOWNLOAD_BOOT")) {
+        process.stdin.removeAllListeners("data");
+
         resolve();
         _console.close();
       }

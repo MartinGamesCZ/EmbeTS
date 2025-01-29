@@ -57,7 +57,9 @@ export async function exec(
     restartOnOpen: false,
   });
 
-  cliLogger.log("Please restart your board in download mode");
+  cliLogger.log(
+    "Please restart your board in download mode -- Press Enter to skip (or if stuck)"
+  );
 
   _console.open();
 
@@ -135,10 +137,20 @@ function awaitReady(_console: EmbedTSConsole) {
       return;
     }
 
+    process.stdin.once("data", (d) => {
+      // If enter is pressed, skip
+      if (d.toString() === "\n") {
+        resolve();
+        _console.close();
+      }
+    });
+
     _console.on("data", (c: string) => {
       buf += c;
 
       if (buf.includes("(POWERON_RESET)") && buf.includes("DOWNLOAD_BOOT")) {
+        process.stdin.removeAllListeners("data");
+
         resolve();
         _console.close();
       }
