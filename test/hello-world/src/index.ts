@@ -19,11 +19,12 @@ for (let i = 0; i < 10; i++) {
   console.log(response.text());
 }*/
 
-const PWD = "xxxxxxxxxxxx";
-
 import { WiFi } from "embets:net";
 
-const wifi = new WiFi("xxxxxxxxx", PWD);
+const wifi = new WiFi(
+  process.env.WIFI_SSID ?? "",
+  process.env.WIFI_PASSWORD ?? ""
+);
 
 wifi.connect();
 console.log("Wifi connected");

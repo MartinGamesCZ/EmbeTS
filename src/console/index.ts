@@ -9,6 +9,9 @@ import type { ConsoleConfig } from "../types/console";
 import { BIN_DIR } from "../config";
 import { Logger } from "src/utils/log";
 import chalk from "chalk";
+import * as denv from "dotenv";
+import path from "path";
+import { existsSync, readFileSync } from "fs";
 
 const EMBEDTS_START_SEQ = "$$$EMBETS$STARTSEQ$$$";
 const EMBEDTS_END_SEQ = "$$$EMBETS$ENDSEQ$$$";
@@ -20,8 +23,11 @@ export class EmbedTSConsole {
 
   private logger: Logger;
 
+  private embetsConfig;
+
   constructor(config: ConsoleConfig) {
     this.config = config;
+    this.embetsConfig = config.embetsConfig;
 
     this.logger = new Logger(
       Logger.s.default("CONSOLE", "bgMagenta", "$message")
@@ -147,6 +153,46 @@ export class EmbedTSConsole {
       this.logger.log("Error flashing code, retrying...");
 
       this.saveCode(code);
+    });
+
+    return new Promise<void>((r) => {
+      const dotenvPath = path.resolve(
+        process.cwd(),
+        this.embetsConfig.env ?? ""
+      );
+
+      this.once("flashed", () => {
+        if (!this.embetsConfig.env || !dotenvPath || !existsSync(dotenvPath)) {
+          r();
+          this.close();
+
+          return;
+        }
+
+        this.once("ready", () => {
+          this.saveEnvVars(denv.parse(readFileSync(dotenvPath, "utf-8")));
+
+          this.once("flashed", () => {
+            r();
+            this.close();
+          });
+        });
+      });
+    });
+  }
+
+  saveEnvVars(env: { [key: string]: string }) {
+    if (!this.proc) this.open();
+    if (!this.proc) return;
+
+    this.sendPacket("ENV_VAR", JSON.stringify(env));
+
+    process.stdout.write(chalk.magenta("●") + " ");
+
+    this.once("flasherr", () => {
+      this.logger.log("Error flashing env vars, retrying...");
+
+      this.saveEnvVars(env);
     });
 
     return new Promise<void>((r) => {

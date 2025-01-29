@@ -178,3 +178,4 @@ dist
 build/
 .vscode
 .clangd
+.env

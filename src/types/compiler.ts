@@ -3,4 +3,5 @@ export interface CompilerConfig {
   output: string;
   board: string;
   onlyJs?: boolean;
+  embetsConfig: any;
 }

@@ -54,6 +54,7 @@ export async function exec(
   const _console = new EmbedTSConsole({
     port: options.port,
     restartOnOpen: false,
+    embetsConfig: config,
   });
 
   _console.open();
@@ -70,6 +71,7 @@ export async function exec(
     entrypoint: args[0] ?? config?.entrypoint,
     output: options.outDir ?? config?.output ?? "build",
     board: options.board ?? config?.board,
+    embetsConfig: config,
   });
 
   await builder.build();
@@ -80,6 +82,7 @@ export async function exec(
   const embetsConsole = new EmbedTSConsole({
     port: options.port,
     restartOnOpen: true,
+    embetsConfig: config,
   });
 
   embetsConsole.attach(process.stdin, process.stdout);

@@ -6,7 +6,8 @@
 #include "./lib/duktape/duktape.h"
 #include "./net/net.h"
 #include "./utils/log.h"
-#include "api/net.h"
+#include "./api/net.h"
+#include "./api/process.h"
 #include <Arduino.h>
 #include <HardwareSerial.h>
 
@@ -35,6 +36,7 @@ void runtime_setup() {
   register_runtime_native_log(ctx);
   register_runtime_native_hardware(ctx);
   register_runtime_native_net(ctx);
+  register_runtime_native_process(ctx);
 }
 
 void runtime_eval(const char *code, bool suppressLog) {

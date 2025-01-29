@@ -18,6 +18,7 @@ import {
   NativeCoreImplNetWifiConnect,
 } from "./core/o_native/net";
 import ApiCoreNet from "./core/api/net";
+import ApiCoreProcess from "./core/api/process";
 
 const INCLUDES = [
   "duktape.h",
@@ -184,6 +185,7 @@ const APIS = [
   //ApiCorePerformance(),
   //ApiCoreTimers(),
   ApiCoreNet(),
+  ApiCoreProcess(),
 ];
 const JS_UTILS: any = [
   // Global needs to be first

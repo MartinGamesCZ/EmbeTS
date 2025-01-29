@@ -125,6 +125,7 @@ export class EmbeTSBuilder {
     const con = new EmbedTSConsole({
       port: port,
       restartOnOpen: true,
+      embetsConfig: this.config.embetsConfig,
     });
 
     con.attach(process.stdin, process.stdout);

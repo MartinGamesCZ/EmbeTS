@@ -55,6 +55,7 @@ export async function exec(
   const _console = new EmbedTSConsole({
     port: options.port,
     restartOnOpen: false,
+    embetsConfig: config,
   });
 
   cliLogger.log(
@@ -72,6 +73,7 @@ export async function exec(
     output: options.outDir ?? config?.output ?? "build",
     board:
       options.board ?? BOARDS.find((b) => b.id === config?.board)?.fqbn ?? "",
+    embetsConfig: config,
   });
 
   if (!process.env.NO_UPLOAD) {
@@ -82,6 +84,7 @@ export async function exec(
   const embetsConsole = new EmbedTSConsole({
     port: options.port,
     restartOnOpen: true,
+    embetsConfig: config,
   });
 
   const watchBuilder = new EmbeTSBuilder({
@@ -90,6 +93,7 @@ export async function exec(
     board:
       options.board ?? BOARDS.find((b) => b.id === config?.board)?.fqbn ?? "",
     onlyJs: true,
+    embetsConfig: config,
   });
 
   embetsConsole.attach(process.stdin, process.stdout);

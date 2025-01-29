@@ -71,6 +71,30 @@ void app_loop(void *parameter) {
           }
         }
 
+        if (cmd == "ENV_VAR") {
+          int dataLength = bridge_pckt_extract_length(packet);
+          String body = bridge_pckt_extract_data(packet);
+
+          if (dataLength != body.length()) {
+            errorLog("Data length mismatch.", true);
+            buffer = "";
+
+            bridge_wsequence_flasherr();
+
+            continue;
+          }
+
+          bool fileWritten = fs_write("/boot/env.json", body);
+          if (!fileWritten)
+            errorLog("Failed to write env vars to file.", true);
+          else {
+            runtimeLog("Env vars updated.");
+            bridge_wsequence_flashed();
+            delay(100);
+            os_restart();
+          }
+        }
+
         buffer = "";
       }
     }
