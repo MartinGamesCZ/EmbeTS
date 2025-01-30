@@ -25,6 +25,19 @@ uint8_t eventloop_create_event(bool (*checkFunction)(uint8_t eId),
   return event.id;
 }
 
+void eventloop_remove_event(uint8_t id) {
+  for (uint8_t i = 0; i < eventCount; i++) {
+    if (events[i].id == id) {
+      for (uint8_t j = i; j < eventCount - 1; j++) {
+        events[j] = events[j + 1];
+      }
+
+      eventCount--;
+      break;
+    }
+  }
+}
+
 void eventloop_tick() {
   for (uint8_t i = 0; i < eventCount; i++) {
     if (events[i].checkFunction(events[i].id)) {
@@ -42,7 +55,7 @@ static void duktape_event_callback() {
   if (duk_peval_string(ctx, (String("$__native_events_fire(") +
                              String(current_event->id) + ")")
                                 .c_str()) != 0) {
-    Serial.println("Error calling event callback");
+    Serial.println(duk_safe_to_string(ctx, -1));
   }
 
   duk_pop(ctx);

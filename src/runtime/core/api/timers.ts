@@ -1,60 +1,39 @@
-declare function $__native_performance_now(): number;
-declare const ___global: {
-  timers?: {
-    id: number;
-    type: "timeout" | "interval";
-    timeout: number;
-    lastCalled: number;
-    callback: () => void;
-  }[];
+declare function $__js_events_register(
+  id: number,
+  once: boolean,
+  cb: () => any
+): void;
+declare function $__js_events_remove(id: number): void;
+declare const $__native_timers: {
+  setInterval: (t: number) => number;
+  clear: (id: number) => void;
 };
 
 function IMPL() {
-  function setTimeout(cb: () => void, t: number): number {
-    if (!___global.timers) ___global.timers = [];
-
-    const id = Math.floor(Math.random() * 1000000) % 1000000;
-
-    ___global.timers.push({
-      id: id,
-      type: "timeout",
-      timeout: t,
-      lastCalled: $__native_performance_now(),
-      callback: cb,
-    });
-
-    return id;
-  }
-
   function setInterval(cb: () => void, t: number): number {
-    if (!___global.timers) ___global.timers = [];
+    const id = $__native_timers.setInterval(t);
 
-    const id = Math.floor(Math.random() * 1000000) % 1000000;
-
-    ___global.timers.push({
-      id: id,
-      type: "interval",
-      timeout: t,
-      lastCalled: $__native_performance_now(),
-      callback: cb,
-    });
+    $__js_events_register(id, false, cb);
 
     return id;
   }
 
-  function clearTimeout(id: number) {
-    if (!___global.timers) return;
+  function setTimeout(cb: () => void, t: number): number {
+    const id = setInterval(() => {
+      cb();
+      clearInterval(id);
+    }, t);
 
-    for (let i = 0; i < ___global.timers.length; i++) {
-      if (___global.timers[i].id === id) {
-        ___global.timers.splice(i, 1);
-        return;
-      }
-    }
+    return id;
   }
 
-  function clearInterval(id: number) {
-    clearTimeout(id);
+  function clearInterval(id: number): void {
+    $__native_timers.clear(id);
+    $__js_events_remove(id);
+  }
+
+  function clearTimeout(id: number): void {
+    clearInterval(id);
   }
 }
 

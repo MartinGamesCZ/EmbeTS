@@ -3,6 +3,7 @@ declare const ___global: {
   events: {
     id: number;
     once: boolean;
+    shouldRemove: boolean;
     callback: () => void;
   }[];
 };
@@ -10,6 +11,8 @@ declare const ___global: {
 function IMPL() {
   function $__native_events_fire(id: number) {
     ___global.events = ___global.events.filter((event) => {
+      if (event.shouldRemove) return false;
+
       if (event.id === id) {
         event.callback();
         return !event.once;
@@ -30,7 +33,18 @@ function IMPL() {
       id: id,
       once: once,
       callback: callback,
+      shouldRemove: false,
     });
+  }
+
+  function $__js_events_remove(id: number) {
+    if (!___global.events) ___global.events = [];
+
+    for (let i = 0; i < ___global.events.length; i++) {
+      if (___global.events[i].id === id) {
+        ___global.events[i].shouldRemove = true;
+      }
+    }
   }
 }
 

@@ -19,17 +19,26 @@ for (let i = 0; i < 10; i++) {
   console.log(response.text());
 }*/
 
-import { WiFi } from "embets:net";
+import { WiFi, request } from "embets:net";
 
-const wifi = new WiFi(
+/*****************const wifi = new WiFi(
   process.env.WIFI_SSID ?? "",
   process.env.WIFI_PASSWORD ?? ""
 );
 
+wifi.on("connected", () => {
+  console.log("Wifi connected, called by event");
+
+  console.log(wifi.connected);
+  console.log(wifi.ip);
+});
+
 wifi.connect();
-console.log("Wifi connected");
 
-console.log(wifi.connected);
-console.log(wifi.ip);
+console.log("Wifi connecting, the function is non-blocking");*/
 
-wifi.disconnect();
+setTimeout(() => {
+  console.log("Timeout called");
+}, 1000);
+
+console.log("Hello, world!");
