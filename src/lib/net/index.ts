@@ -6,6 +6,7 @@ declare class WiFi {
   disconnect(): void;
   get connected(): boolean;
   get ip(): string;
+  on(e: "connected", cb: () => any): void;
 }
 declare function request(
   url: string,

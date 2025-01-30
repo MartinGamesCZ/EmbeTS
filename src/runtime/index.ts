@@ -19,6 +19,7 @@ import {
 } from "./core/o_native/net";
 import ApiCoreNet from "./core/api/net";
 import ApiCoreProcess from "./core/api/process";
+import ApiCoreEvents from "./core/api/events";
 
 const INCLUDES = [
   "duktape.h",
@@ -183,14 +184,15 @@ const APIS = [
   ApiCoreConsole(),
   ApiCoreBoard(),
   //ApiCorePerformance(),
-  //ApiCoreTimers(),
+  ApiCoreTimers(),
   ApiCoreNet(),
   ApiCoreProcess(),
+  ApiCoreEvents(),
 ];
 const JS_UTILS: any = [
   // Global needs to be first
   // ---------------------------
-  //JsUtilsFnGlobal(),
+  JsUtilsFnGlobal(),
   // ---------------------------
   //JsUtilsFnLoop(),
   //JsUtilsFnErrorCreator(),

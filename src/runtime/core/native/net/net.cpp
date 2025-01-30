@@ -1,9 +1,12 @@
 #include "./net.h"
 
 #include <Arduino.h>
+#include <HTTPClient.h>
 #include <HardwareSerial.h>
 #include <IPAddress.h>
 #include <WiFi.h>
+
+HTTPClient httpClient;
 
 bool net_sta_connected() { return WiFi.status() == WL_CONNECTED; }
 
@@ -23,8 +26,24 @@ void net_sta_connect(const char *ssid, const char *password) {
 
   WiFi.begin(ssid, password);
 
-  while (!net_sta_connected())
-    delay(100);
+  /*while (!net_sta_connected())
+    delay(100);*/
+
+  // TODO: Add async variant and put it into duktape function
 }
 
 IPAddress net_sta_ip() { return WiFi.localIP(); }
+
+// -------------------- HTTP --------------------
+int net_http_get(const char *url) {
+  httpClient.begin(url);
+  return httpClient.GET();
+}
+
+const char *net_http_result() { return httpClient.getString().c_str(); }
+
+const char *net_http_error(int code) {
+  return httpClient.errorToString(code).c_str();
+}
+
+void net_http_end() { httpClient.end(); }

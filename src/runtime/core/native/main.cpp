@@ -1,6 +1,7 @@
 #include "./main.h"
 
 #include "./bridge/bridge.h"
+#include "./event/event_loop.h"
 #include "./fs/fs.h"
 #include "./os/os.h"
 #include "./runtime.h"
@@ -98,7 +99,15 @@ void app_loop(void *parameter) {
         buffer = "";
       }
     }
-    delay(5);
+
+    delay(1);
+  }
+}
+
+void app_event_loop(void *parameter) {
+  while (true) {
+    eventloop_tick();
+    delay(1);
   }
 }
 
@@ -111,6 +120,8 @@ void app_main(bool shouldWipe) {
     fs_wipe();
 
   xTaskCreatePinnedToCore(app_loop, "LoopTask", 10000, NULL, 1, &LoopTask, 0);
+  xTaskCreatePinnedToCore(app_event_loop, "EventLoopTask", 10000, NULL, 1, NULL,
+                          1);
 
   app_program();
 }
