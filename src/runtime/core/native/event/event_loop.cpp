@@ -8,7 +8,7 @@ Event events[MAX_EVENTS] = {};
 uint8_t eventCount = 0;
 
 uint8_t eventloop_create_event(bool (*checkFunction)(uint8_t eId),
-                               void (*callback)()) {
+                               void (*callback)(uint8_t eId)) {
   if (eventCount >= MAX_EVENTS) {
     return 255; // Error code for full array
   }
@@ -41,16 +41,24 @@ void eventloop_remove_event(uint8_t id) {
 void eventloop_tick() {
   for (uint8_t i = 0; i < eventCount; i++) {
     if (events[i].checkFunction(events[i].id)) {
-      events[i].callback();
+      events[i].callback(events[i].id);
     }
   }
 }
 
 static duk_context *current_ctx = nullptr;
 
-static void duktape_event_callback() {
-  Event *current_event = &events[eventCount - 1]; // Get the current event
-  duk_context *ctx = current_event->ctx;          // Use the event's context
+static void duktape_event_callback(uint8_t eId) {
+  Event *current_event;
+
+  for (uint8_t i = 0; i < eventCount; i++) {
+    if (events[i].id == eId) {
+      current_event = &events[i];
+      break;
+    }
+  }
+
+  duk_context *ctx = current_event->ctx; // Use the event's context
 
   if (duk_peval_string(ctx, (String("$__native_events_fire(") +
                              String(current_event->id) + ")")

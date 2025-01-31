@@ -1,6 +1,6 @@
 {
   "name": "embets",
-  "version": "0.3.1",
+  "version": "0.4.1",
   "description": "TypeScript runtime for embedded microcontrollers",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
@@ -11,7 +11,7 @@
     "url": "https://github.com/MartinGamesCZ"
   },
   "scripts": {
-    "build": "tsc",
+    "build": "tsc && mkdir -p dist/runtime/core/native && cp -r src/runtime/core/native/* dist/runtime/core/native",
     "prepare": "npm run build"
   },
   "files": [

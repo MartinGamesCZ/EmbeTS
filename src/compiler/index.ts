@@ -15,9 +15,9 @@ import { execSync, spawn, spawnSync } from "child_process";
 import { BIN_DIR } from "../config";
 import { escapeQuotes, escapeRawCode } from "../utils/escape";
 import swc from "@swc/core";
-import { Logger } from "src/utils/log";
+import { Logger } from "../utils/log";
 import chalk from "chalk";
-import { EmbedTSConsole } from "src/console";
+import { EmbedTSConsole } from "../console";
 
 export class EmbeTSBuilder {
   private readonly config: CompilerConfig;

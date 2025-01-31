@@ -2,8 +2,8 @@ import { EmbedTSConsole } from "../../console";
 import { EmbeTSBuilder } from "../../compiler";
 import path from "path";
 import { existsSync, readFile, readFileSync } from "fs";
-import { BOARDS } from "src/config";
-import { Logger } from "src/utils/log";
+import { BOARDS } from "../../config";
+import { Logger } from "../../utils/log";
 
 export const NAME = "upload";
 export const OPTIONS = [

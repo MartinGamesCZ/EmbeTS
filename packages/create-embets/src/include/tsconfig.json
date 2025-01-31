@@ -29,7 +29,12 @@
       "@": ["./src"],
 
       // EmbeTS modules
-      "embets:hardware": ["./node_modules/embets/dist/lib/hardware/index.d.ts"]
+      "embets:hardware": ["./node_modules/embets/dist/lib/hardware/index.d.ts"],
+      "embets:net": ["./node_modules/embets/dist/lib/net/index.d.ts"],
+      "embets:imports": ["./node_modules/embets/dist/lib/imports/index.d.ts"],
+      "embets:timers": ["./node_modules/embets/dist/lib/timers/index.d.ts"],
+
+      "*.h": ["./node_modules/embets/dist/lib/imports/type.d.ts"]
     }
   }
 }

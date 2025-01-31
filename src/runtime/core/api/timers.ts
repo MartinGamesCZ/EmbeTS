@@ -7,6 +7,8 @@ declare function $__js_events_remove(id: number): void;
 declare const $__native_timers: {
   setInterval: (t: number) => number;
   clear: (id: number) => void;
+  delay: (t: number) => void;
+  delayMicro: (t: number) => void;
 };
 
 function IMPL() {
@@ -25,6 +27,14 @@ function IMPL() {
     }, t);
 
     return id;
+  }
+
+  function delay(t: number) {
+    return $__native_timers.delay(t);
+  }
+
+  function delayMicroseconds(t: number) {
+    return $__native_timers.delayMicro(t);
   }
 
   function clearInterval(id: number): void {

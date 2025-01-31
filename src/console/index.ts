@@ -7,7 +7,7 @@ import {
 } from "child_process";
 import type { ConsoleConfig } from "../types/console";
 import { BIN_DIR } from "../config";
-import { Logger } from "src/utils/log";
+import { Logger } from "../utils/log";
 import chalk from "chalk";
 import * as denv from "dotenv";
 import path from "path";

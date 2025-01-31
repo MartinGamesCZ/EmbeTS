@@ -14,6 +14,8 @@ declare const board: {
     setMode: (mode: 1 | 3 | 5 | 9 | PinMode) => void;
     setState: (value: 0 | 1 | boolean | PinState) => void;
     getState: () => 0 | 1;
+    measurePulse: (state: 0 | 1 | PinState) => number;
+    on: (e: "low" | "high", cb: () => any) => void;
   };
 };
 

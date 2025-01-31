@@ -2,8 +2,8 @@ import { EmbedTSConsole } from "../../console";
 import { EmbeTSBuilder } from "../../compiler";
 import { watchFile, readFileSync, existsSync, unwatchFile, statSync } from "fs";
 import path from "path";
-import { BOARDS } from "src/config";
-import { Logger } from "src/utils/log";
+import { BOARDS } from "../../config";
+import { Logger } from "../../utils/log";
 
 export const NAME = "watch";
 export const OPTIONS = [

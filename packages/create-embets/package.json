@@ -1,6 +1,6 @@
 {
   "name": "create-embets",
-  "version": "0.0.1",
+  "version": "0.1.0",
   "description": "This package is used to create an [embeTS](https://npmjs.org/package/embets) project.",
   "main": "src/index.js",
   "type": "module",

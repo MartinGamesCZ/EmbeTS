@@ -19,9 +19,9 @@ for (let i = 0; i < 10; i++) {
   console.log(response.text());
 }*/
 
-import { WiFi, request } from "embets:net";
+/*import { WiFi, request } from "embets:net";
 
-/*****************const wifi = new WiFi(
+const wifi = new WiFi(
   process.env.WIFI_SSID ?? "",
   process.env.WIFI_PASSWORD ?? ""
 );
@@ -35,10 +35,41 @@ wifi.on("connected", () => {
 
 wifi.connect();
 
-console.log("Wifi connecting, the function is non-blocking");*/
+console.log("Wifi connecting, the function is non-blocking");
+*/
 
-setTimeout(() => {
-  console.log("Timeout called");
-}, 1000);
+/*import { board, PinMode, PinState } from "embets:hardware";
+import { delay, delayMicroseconds } from "embets:timers";
 
-console.log("Hello, world!");
+const trig = board.pins(5);
+const echo = board.pins(18);
+
+const relay = board.pins(22);
+
+trig.setMode(PinMode.OUTPUT);
+echo.setMode(PinMode.INPUT);
+
+relay.setMode(PinMode.OUTPUT);
+
+delay(50);
+
+while (true) {
+  trig.setState(PinState.LOW);
+  delayMicroseconds(2);
+  trig.setState(PinState.HIGH);
+  delayMicroseconds(10);
+  trig.setState(PinState.LOW);
+
+  const pulse = echo.measurePulse(PinState.HIGH);
+
+  const distance = pulse * (0.034 / 2);
+
+  if (distance < 20 || distance > 1200) {
+    relay.setState(PinState.LOW);
+  } else {
+    relay.setState(PinState.HIGH);
+  }
+
+  delay(100);
+}
+*/

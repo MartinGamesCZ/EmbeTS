@@ -2,7 +2,14 @@ declare const $__native_hardware_board: {
   setMode: (pin: number | string, mode: number) => void;
   setState: (pin: number | string, value: number) => void;
   getState: (pin: number | string) => number;
+  measurePulse: (pin: number | string, state: number) => number;
+  devton: (e: "low" | "high", pin: number) => number;
 };
+declare const $__js_events_register: (
+  id: number,
+  once: boolean,
+  cb: () => any
+) => void;
 
 declare enum PinMode {
   OUTPUT = 0x03,
@@ -27,6 +34,20 @@ function IMPL() {
         },
         getState: () => {
           return $__native_hardware_board.getState(pin);
+        },
+        measurePulse: (state: number) => {
+          return $__native_hardware_board.measurePulse(pin, state);
+        },
+        on: (e: "low" | "high", cb: () => any) => {
+          if (e !== "low" && e !== "high") {
+            throw new Error(
+              "Only 'low' and 'high' event is supported for now."
+            );
+          }
+
+          const id = $__native_hardware_board.devton(e, pin);
+
+          $__js_events_register(id, false, cb);
         },
       };
     },

@@ -31,6 +31,7 @@
       "embets:hardware": ["../../dist/lib/hardware/index.d.ts"],
       "embets:net": ["../../dist/lib/net/index.d.ts"],
       "embets:imports": ["../../dist/lib/imports/index.d.ts"],
+      "embets:timers": ["../../dist/lib/timers/index.d.ts"],
 
       "*.h": ["../../dist/lib/imports/type.d.ts"]
     }

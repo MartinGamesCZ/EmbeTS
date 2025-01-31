@@ -51,6 +51,8 @@ static duk_ret_t impl_runtime_native_timers_setinterval(duk_context *ctx) {
 
   timers[timerCount].id = id;
 
+  timerCount++;
+
   duk_push_int(ctx, id);
 
   return 1;
@@ -74,6 +76,23 @@ static duk_ret_t impl_runtime_native_timers_clear(duk_context *ctx) {
   return 0;
 }
 
+static duk_ret_t impl_runtime_native_timers_blockingdelay(duk_context *ctx) {
+  int timeout = duk_require_int(ctx, 0);
+
+  delay(timeout);
+
+  return 0;
+}
+
+static duk_ret_t
+impl_runtime_native_timers_blockingdelaymicro(duk_context *ctx) {
+  int timeout = duk_require_int(ctx, 0);
+
+  delayMicroseconds(timeout);
+
+  return 0;
+}
+
 void register_runtime_native_timers(duk_context *ctx) {
   duk_push_object(ctx);
 
@@ -82,6 +101,14 @@ void register_runtime_native_timers(duk_context *ctx) {
 
   duk_push_c_function(ctx, impl_runtime_native_timers_clear, DUK_VARARGS);
   duk_put_prop_string(ctx, -2, "clear");
+
+  duk_push_c_function(ctx, impl_runtime_native_timers_blockingdelay,
+                      DUK_VARARGS);
+  duk_put_prop_string(ctx, -2, "delay");
+
+  duk_push_c_function(ctx, impl_runtime_native_timers_blockingdelaymicro,
+                      DUK_VARARGS);
+  duk_put_prop_string(ctx, -2, "delayMicro");
 
   duk_put_global_string(ctx, "$__native_timers");
 }
