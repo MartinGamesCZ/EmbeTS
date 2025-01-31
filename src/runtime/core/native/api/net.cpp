@@ -77,20 +77,21 @@ static duk_ret_t impl_runtime_native_net_http_get(duk_context *ctx) {
 
   int code = net_http_get(url);
 
-  duk_push_object(ctx);
+  duk_idx_t id = duk_push_object(ctx);
+
   duk_push_int(ctx, code);
-  duk_put_prop_string(ctx, -2, "code");
+  duk_put_prop_string(ctx, id, "code");
 
   if (code > 0) {
-    const char *res = net_http_result();
+    String res = net_http_result();
 
-    duk_push_string(ctx, res);
-    duk_put_prop_string(ctx, -2, "body");
+    duk_push_string(ctx, res.c_str());
+    duk_put_prop_string(ctx, id, "body");
   } else {
     const char *err = net_http_error(code);
 
     duk_push_string(ctx, err);
-    duk_put_prop_string(ctx, -2, "error");
+    duk_put_prop_string(ctx, id, "error");
   }
 
   net_http_end();

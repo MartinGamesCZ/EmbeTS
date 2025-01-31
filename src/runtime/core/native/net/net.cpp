@@ -40,7 +40,7 @@ int net_http_get(const char *url) {
   return httpClient.GET();
 }
 
-const char *net_http_result() { return httpClient.getString().c_str(); }
+String net_http_result() { return httpClient.getString(); }
 
 const char *net_http_error(int code) {
   return httpClient.errorToString(code).c_str();

@@ -11,7 +11,7 @@ IPAddress net_sta_ip();
 
 // -------------------- HTTP --------------------
 int net_http_get(const char *url);
-const char *net_http_result();
+String net_http_result();
 const char *net_http_error(int code);
 void net_http_end();
 
